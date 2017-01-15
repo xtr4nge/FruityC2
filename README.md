@@ -52,7 +52,7 @@ https://github.com/xtr4nge/FruityC2-Client/wiki
 ## Extra Scripts
 
 ### download-modules-extra.sh
-This script can be used to download extra modules from the projects: Empire, PowerSploit, PowerShell-AD-Recon and Nishang
+This script can be used to download extra modules from the projects: [Empire](https://github.com/adaptivethreat/Empire), [PowerSploit](https://github.com/PowerShellMafia/PowerSploit), [PowerShell-AD-Recon](https://github.com/PyroTek3/PowerShell-AD-Recon) and [Nishang](https://github.com/samratashok/nishang)
 
 ### reset.sh
 This script can be used to backup the data, logs and config files to then reset the server data.
