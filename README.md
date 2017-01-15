@@ -25,7 +25,7 @@ script: [install-standalone.sh](https://github.com/xtr4nge/FruityC2/blob/master/
 
 ## Run
 
-Edit the file "config/settings.conf" and add the IP (from where [FruityC2-Client](https://github.com/xtr4nge/FruityC2-Client) will be used) in section:
+Edit the file `config/settings.conf` and add the IP (from where [FruityC2-Client](https://github.com/xtr4nge/FruityC2-Client) will be used) in section:
 <br>
 `[souce][[control]]`
 <br>
