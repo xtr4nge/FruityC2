@@ -1,0 +1,47 @@
+{
+    "sleeptime": 5000,
+    "jitter": 0,
+    "useragent": "",
+    "http-get": {
+        "uri": "",
+        "client": {
+            "header": [
+
+                ],
+            "metadata": [
+
+                ]
+            },
+        "server": {
+            "header": [
+
+            ],
+            "output": [
+                "print"
+            ]
+        }
+    },
+    "http-post": {
+        "uri": "",
+        "client": {
+            "header": [
+
+            ],
+            "parameter": [
+
+            ],
+            "output": [
+                "base64",
+                "print"
+            ]
+        },
+        "server": {
+            "header": [
+
+            ],
+            "output": [
+                "print"
+            ]
+        }
+    }
+}

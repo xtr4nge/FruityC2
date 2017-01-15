@@ -1,0 +1,70 @@
+{
+    "sleeptime": 5,
+    "jitter": 0,
+    "useragent": "Mozilla/5.0 (Windows NT 6.1; WOW64; Trident/7.0; rv:11.0) like Gecko",
+    "http-get": {
+        "uri": "/s/ref=nb_sb_noss_1/167-3294888-0262949/field-keywords=books",
+        "client": {
+            "header": [
+                "Accept */*",
+                "Host www.amazon.com"
+                ],
+            "metadata": [
+                "base64",
+                "prepend session-token=",
+                "prepend skin=noskin;''",
+                "append csm-hit=s-24KU11BB82RZSYGJ3BDK|1419899012996",
+                "header Cookie"
+                ]
+            },
+        "server": {
+            "header": [
+                "Server Server",
+                "x-amz-id-1 THKUYEZKCKPGY5T42PZT",
+                "x-amz-id-2 a21yZ2xrNDNtdGRsa212bGV3YW85amZuZW9ydG5rZmRuZ2tmZGl4aHRvNDVpbgo=",
+                "X-Frame-Options SAMEORIGIN",
+                "Content-Encoding *"
+            ],
+            "output": [
+                "print"
+            ]
+        }
+    },
+    "http-post": {
+        "uri": "/N4215/adj/amzn.us.sr.aps",
+        "client": {
+            "header": [
+                "Accept */*",
+                "Content-Type text/xml",
+                "X-Requested-With XMLHttpRequest",
+                "Host www.amazon.com"
+            ],
+            "parameter": [
+                "sz 160x600",
+                "oe oe=ISO-8859-1;",
+                "s 3717",
+                "dc_ref http%3A%2F%2Fwww.amazon.com"
+            ],
+			"id": [
+				"sn"
+			],
+            "output": [
+                "base64",
+                "print"
+            ]
+        },
+        "server": {
+            "header": [
+                "Server Server",
+                "x-amz-id-1 THK9YEZJCKPGY5T42OZT",
+                "x-amz-id-2 a21JZ1xrNDNtdGRsa219bGV3YW85amZuZW9zdG5rZmRuZ2tmZGl4aHRvNDVpbgo=",
+                "X-Frame-Options SAMEORIGIN",
+                "x-ua-compatible IE=edge"
+            ],
+            "output": [
+                "print"
+            ]
+        }
+        
+    }
+}

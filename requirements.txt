@@ -1,0 +1,6 @@
+python-pip
+python-requests
+python-configobj
+python-flask
+Flask-CORS
+Flask-Cors

@@ -1,0 +1,74 @@
+{
+    "sleeptime": 5,
+    "jitter": 20,
+    "useragent": "Mozilla/5.0 (Windows NT 6.1; WOW64; Trident/7.0; rv:11.0) like Gecko",
+    "http-get": {
+        "uri": "/safebrowsing/rd/CltOb12nLW1IbHehcmUtd2hUdmFzEBAY7-0KIOkUDC7h2",
+        "client": {
+            "header": [
+				"Accept text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+				"Accept-Language en-US,en;q=0.5",
+				"Accept-Encoding gzip, deflate"
+                ],
+            "metadata": [
+				"netbios",
+				"prepend PREF=ID=",
+				"header Cookie"
+                ]
+            },
+        "server": {
+            "header": [
+				"Content-Type application/vnd.google.safebrowsing-chunk",
+                "X-Content-Type-Options nosniff",
+                "Content-Encoding gzip",
+                "X-XSS-Protection 1; mode=block",
+                "X-Frame-Options SAMEORIGIN",
+                "Cache-Control public,max-age=172800",
+                "Age 1222",
+                "Alternate-Protocol 80:quic"
+            ],
+            "output": [
+                "print"
+            ]
+        }
+    },
+    "http-post": {
+        "uri": "/safebrowsing/rd/CINnu27nLO8hbHdfgmUtc2ihdmFyEAcY4",
+        "client": {
+            "header": [
+                "Accept text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+                "Accept-Language en-US,en;q=0.5",
+                "Accept-Encoding gzip, deflate"
+            ],
+            "parameter": [
+
+            ],
+            "id": [
+                "netbios",
+                "prepend U=779b64e1a7ed737a",
+                "prepend PREF=ID=",
+                "header Cookie"
+            ],
+            "output": [
+                "base64",
+                "print"
+            ]
+        },
+        "server": {
+            "header": [
+                "Content-Type application/vnd.google.safebrowsing-chunk",
+                "X-Content-Type-Options nosniff",
+                "Content-Encoding gzip",
+                "X-XSS-Protection 1; mode=block",
+                "X-Frame-Options SAMEORIGIN",
+                "Cache-Control public,max-age=172800",
+                "Age 1222",
+                "Alternate-Protocol 80:quic"
+            ],
+            "output": [
+                "print"
+            ]
+        }
+        
+    }
+}

