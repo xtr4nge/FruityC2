@@ -3,7 +3,7 @@ echo "--------------------------------"
 echo "Installing FruityC2 dependencies"
 echo "--------------------------------"
 
-apt-get -y install python-pip python-requests python-configobj python-flask
+apt-get -y install python-pip python-requests python-configobj python-flask git
 
 pip install Flask-CORS
 
