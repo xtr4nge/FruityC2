@@ -1,6 +1,6 @@
 # FruityC2
 
-This is the initial release for FruityC2 (alpha version). Can be installed on any linux system, but the installation scripts are made for Debian based systems. There are a lot of functionalities that I will be include in future releases, and probably a lot of code will be changed, but this version is enough to show FruityC2.
+This is the initial release for FruityC2 (alpha version). Can be installed on any linux system, but the installation scripts are made for Debian based systems. There are a lot of functionalities that will be include in future releases, and probably a lot of code will be changed, but this version is enough to show FruityC2.
 
 During the development of the initial alpha version, I divided the efforts between the client and the server, but mainly on the client. 
 
