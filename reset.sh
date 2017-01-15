@@ -5,9 +5,7 @@ echo "BACKUP DATA, CONFIGS AND LOGS  "
 echo "--------------------------------"
 DIR="_BACKUP_"
 if [ ! -d "$DIR" ]; then
-	#cmd=`date +"%Y-%m-%d-%H-%M-%S"`
 	mkdir $DIR
-	#echo
 fi
 
 if [ -d "$DIR" ]; then
