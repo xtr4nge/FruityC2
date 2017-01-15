@@ -25,12 +25,11 @@ script: [install-standalone.sh](https://github.com/xtr4nge/FruityC2/blob/master/
 
 ## Run
 
-Edit the file "config/settings.conf" and add the IP (from where [FruityC2-Client](https://github.com/xtr4nge/FruityC2-Client) will be used) in section: 
-`[souce]`
+Edit the file "config/settings.conf" and add the IP (from where [FruityC2-Client](https://github.com/xtr4nge/FruityC2-Client) will be used) in section:
 <br>
-`    [[control]]`
+`[souce][[control]]`
 <br>
-`          allow = '127.0.0.1', '10.0.0.1', 'fruityc2-client-ip'`
+`allow = '127.0.0.1', '10.0.0.1', 'fruityc2-client-ip'`
 
 Then run `./FruityC2.py`
 
