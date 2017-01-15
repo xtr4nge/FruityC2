@@ -1,5 +1,14 @@
 # FruityC2
 
+This is the initial release for FruityC2 (alpha version). Can be installed on any linux system, but the installation scripts are made for Debian based systems. There are a lot of functionalities that I will be include in future releases, and probably a lot of code will be changed, but this version is enough to show FruityC2.
+
+During the development of the initial alpha version, I divided the efforts between the client and the server, but mainly on the client. 
+
+The next steps are to improve the Stager and Agent, add more functionalities and commands, and I will start developing new stagers and agents for other OS systems.
+
+Note: The current Stager and Agent can be only executed on Windows (powershell), but this will be extended in future releases to other systems and file types.
+<br><br>
+
 ## Install
 
 ### Method 1: Standard installer (Server)
