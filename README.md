@@ -33,7 +33,11 @@ Edit the file "config/settings.conf" and add the IP (from where [FruityC2-Client
 
 Then run `./FruityC2.py`
 
-Note: To use FruityC2 you need [FruityC2-Client](https://github.com/xtr4nge/FruityC2-Client). You don't need a webserver to use FruityC2-Client, just open `index.html`.
+**Note**: To use FruityC2 you need [FruityC2-Client](https://github.com/xtr4nge/FruityC2-Client). You don't need a webserver to use FruityC2-Client, just open `index.html`.
+<br><br>
+
+## FruityC2-Client Wiki
+https://github.com/xtr4nge/FruityC2-Client/wiki
 <br><br>
 
 ## Extra Scripts
