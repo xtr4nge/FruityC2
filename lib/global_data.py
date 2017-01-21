@@ -30,6 +30,8 @@ class global_data():
         self.listener = {}
         self.listener_details = {}
         self.credentials = {} # IN USE: FruityC2.py, libs/Utils.py
+        self.credentials_spn = {} # IN USE: FruityC2.py, libs/Utils.py
+        self.credentials_ticket = {} # IN USE: FruityC2.py, libs/Utils.py
         
         self.profile_file = ""
         self.key = "SECRET"
