@@ -459,6 +459,8 @@ def beaconGetData(request):
                         "host": v_host,
                         "source": "hashdump"
                     }
+            
+            store_credentials()
         
         # SEARCH SPNs
         if last_command.startswith("spn_search"):
