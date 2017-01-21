@@ -443,7 +443,7 @@ def beaconGetData(request):
                     v_type = "hash"
                     v_domain = ""
                     v_user = item[0]
-                    v_pass = item[2]
+                    v_pass = item[3]
                     v_host = gdata.target[uuid]["name"]
                     
                     h = hashlib.md5()
