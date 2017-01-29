@@ -2,6 +2,7 @@
     "sleeptime": 5,
     "jitter": 20,
     "useragent": "Mozilla/5.0 (Windows NT 6.1; WOW64; Trident/7.0; rv:11.0) like Gecko",
+    "session_id": "session-id",
     "http-get": {
         "uri": "/safebrowsing/rd/CltOb12nLW1IbHehcmUtd2hUdmFzEBAY7-0KIOkUDC7h2",
         "client": {
@@ -41,13 +42,13 @@
                 "Accept-Encoding gzip, deflate"
             ],
             "parameter": [
-
-            ],
-            "id": [
                 "netbios",
                 "prepend U=779b64e1a7ed737a",
                 "prepend PREF=ID=",
                 "header Cookie"
+            ],
+            "id": [
+                "sn"
             ],
             "output": [
                 "base64",

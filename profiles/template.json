@@ -2,16 +2,17 @@
     "sleeptime": 5000,
     "jitter": 0,
     "useragent": "",
+    "session_id": "",
     "http-get": {
         "uri": "",
         "client": {
             "header": [
 
-                ],
+            ],
             "metadata": [
 
-                ]
-            },
+            ]
+        },
         "server": {
             "header": [
 
@@ -29,6 +30,9 @@
             ],
             "parameter": [
 
+            ],
+            "id": [
+                
             ],
             "output": [
                 "base64",

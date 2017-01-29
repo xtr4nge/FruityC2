@@ -2,21 +2,22 @@
     "sleeptime": 5,
     "jitter": 0,
     "useragent": "Mozilla/5.0 (Windows NT 6.1; WOW64; Trident/7.0; rv:11.0) like Gecko",
+    "session_id": "session-token",
     "http-get": {
         "uri": "/s/ref=nb_sb_noss_1/167-3294888-0262949/field-keywords=books",
         "client": {
             "header": [
                 "Accept */*",
                 "Host www.amazon.com"
-                ],
+            ],
             "metadata": [
                 "base64",
                 "prepend session-token=",
                 "prepend skin=noskin;''",
                 "append csm-hit=s-24KU11BB82RZSYGJ3BDK|1419899012996",
                 "header Cookie"
-                ]
-            },
+            ]
+        },
         "server": {
             "header": [
                 "Server Server",

