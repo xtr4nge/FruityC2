@@ -424,7 +424,7 @@ def setAgent(request):
     #target_data = rx_data(request.cookies.get(session_id)).split("|")
     
     # SEARCH SESSION_ID
-    print request.cookies
+    #print request.cookies
     for cookie_name in request.cookies:
         try:
             target_data = rx_data(request.cookies.get(cookie_name)).split("|")
