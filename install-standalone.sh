@@ -14,6 +14,13 @@ echo "--------------------------------"
 
 git clone https://github.com/xtr4nge/FruityC2
 
+# SSL
+echo
+echo "--------------------------------"
+echo "Create SSL certificate (default)"
+echo "--------------------------------"
+openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout FruityC2/certs/nginx.key -out FruityC2/certs/nginx.crt
+
 echo
 echo "--------------------------------"
 echo "Downloading FruityC2-Client     "
