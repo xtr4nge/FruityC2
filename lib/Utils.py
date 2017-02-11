@@ -34,12 +34,12 @@ from multiprocessing import JoinableQueue, Manager
 # LIBS
 from lib.global_data import *
 
-def print_banner():
+def print_banner(__version__):
     banner = '''  ___         _ _         ___ ___ 
  | __| _ _  _(_) |_ _  _ / __|_  )
  | _| '_| || | |  _| || | (__ / / 
  |_||_|  \_,_|_|\__|\_, |\___/___|
-                    |__/          '''
+                    |__/     v%s ''' % __version__
 
     print banner
     print ""
@@ -399,4 +399,3 @@ def kirbi2john(data, filename):
             et = (str(decoder.decode(ticket.decode('hex'))[0][4][3][2]),0,filename)
 
     return "$krb5tgs$" + et[2] + ":"+et[0][:16].encode("hex")+"$"+et[0][16:].encode("hex")
-

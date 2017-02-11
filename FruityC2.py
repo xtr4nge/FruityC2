@@ -54,8 +54,11 @@ import logging
 log = logging.getLogger('werkzeug')
 log.setLevel(logging.ERROR)
 
+requests.packages.urllib3.disable_warnings() # DISABLE SSL CHECK WARNINGS
+
 # FRUITYC2 BANNER
-print_banner()
+__version__ = "0.4"
+print_banner(__version__)
 
 # LOAD PARAMETERS
 (profileConfig, server_ip, server_port) = parseOptions(sys.argv[1:])
@@ -74,6 +77,7 @@ payload = {}
 web_delivery = {}
 listener = {}
 listener_details = {}
+commands_help = {}
 
 profile_file = profileConfig
 key = 'SECRET' # NOT IMPLEMENTED
@@ -112,12 +116,15 @@ try:
         gdata.credentials_ticket = json.load(data)
 except: pass
 
+with open('config/commands.json') as data:    
+    commands_help = json.load(data)
+
 # START FLASK LISTENER
-def run_server(id, x):
+def run_server(id, port):
     #context = ssl.SSLContext(ssl.PROTOCOL_TLSv1_2)
     #context.load_cert_chain('nginx.crt', 'nginx.key')
     #app.run(host='0.0.0.0', port=int(x), debug=False, ssl_context=context)
-    app.run(host='0.0.0.0', port=int(x), debug=False)
+    app.run(host='0.0.0.0', port=int(port), debug=False)
 
 # ------ EXPERIMENTAL ---------
 # REF: http://flask.pocoo.org/snippets/122/
@@ -163,7 +170,18 @@ def gzipped(f):
 
 # FLASK START/STOP
 def flask_init(x, port):
-    app.run(host='0.0.0.0', port=int(port))
+    try:
+        if listener_details[port]["ssl"]:
+            # REF: http://werkzeug.pocoo.org/docs/0.11/serving/
+            context = ssl.SSLContext(ssl.PROTOCOL_TLSv1_2)
+            context.load_cert_chain('certs/nginx.crt', 'certs/nginx.key')
+            app.run(host='0.0.0.0', port=int(port), debug=False, ssl_context=context)
+        else:
+            app.run(host='0.0.0.0', port=int(port))
+    except:
+        app.run(host='0.0.0.0', port=int(port))
+    #app.run(host='0.0.0.0', port=int(port))
+    
     #print "bye %s" % port # UPDATE STATUS HERE [global]
     listener_details[port]["open"] = False
     if option_debug: listener_show()
@@ -178,7 +196,10 @@ def flask_start(port):
 
 def flask_stop(port):
     print "Stopping Listener %s%s:%s%s" % (bcolors.BOLD, listener_details[port]["host"], port, bcolors.ENDC)
-    r = requests.get('http://127.0.0.1:%s/shutdown' % port)
+    if listener_details[port]["ssl"]:
+        r = requests.get('https://127.0.0.1:%s/shutdown' % port, verify=False)
+    else:
+        r = requests.get('http://127.0.0.1:%s/shutdown' % port)
     #print r.status_code
     if option_debug: listener_show()
 
@@ -585,6 +606,9 @@ def set_payload_template(template, payload_code, listener_id):
     path = profile["http-get"]["uri"]
     domain = listener_details[listener_id]["host"]
     port = str(listener_id)
+    if listener_details[listener_id]["ssl"]:
+        ssl = "s"
+    else: ssl = ""
     
     data = ""
     with open(template) as f:
@@ -601,6 +625,8 @@ def set_payload_template(template, payload_code, listener_id):
                 line = line.replace("**path**", path)
             if "**payload_code**" in line:
                 line = line.replace("**payload_code**", payload_code)
+            if "**ssl**" in line:
+                line = line.replace("**ssl**", ssl)
             data += line
             
     return data
@@ -909,13 +935,14 @@ def listener_add():
     v_port = request.form.get('port')
     v_name = request.form.get('name')
     v_host = request.form.get('host')
+    v_ssl = request.form.get('ssl')
     
     timestamp = str(int(time.time()))
     
     listener[v_port] = ""
     listener_details[v_port] = {"name": v_name,
                         "host": v_host,
-                        "ssl": False,
+                        "ssl": v_ssl,
                         "open": False
                           }
     
@@ -937,7 +964,8 @@ def listener_del(port):
     try:
         resp = Response(json.dumps("Delete %s" % port))
         #listener[port].terminate()
-        flask_stop(port)
+        try: flask_stop(port)
+        except: pass
         del listener[port]
         del listener_details[port]
         
@@ -962,10 +990,11 @@ def listener_update():
     v_id = request.form.get('id')
     v_name = request.form.get('name')
     v_host = request.form.get('host')
+    v_ssl = request.form.get('ssl')
     
     listener_details[v_id] = {"name": v_name,
                      "host": v_host,
-                     "ssl": False,
+                     "ssl": v_ssl,
                      "open": False
                     }
     
@@ -983,6 +1012,7 @@ def add_listener(port):
     global listener
     
     port = int(port)
+    ssl = False
     
     if check_port(port):
         resp = Response("Port %s is already open" % port)
@@ -1260,6 +1290,15 @@ def list_credentials_ticket():
     if validate_source_ip(request): return get_profile_headers_denied()
     
     resp = Response(json.dumps(gdata.credentials_ticket))
+    return resp
+
+# LIST COMMANDS (HELP)
+@app.route('/commands')
+def list_commands_help():
+    # VERIFY IF SOURCE IP IS ALLOWED
+    if validate_source_ip(request): return get_profile_headers_denied()
+    
+    resp = Response(json.dumps(commands_help))
     return resp
 
 # DEFAULT [GET]

