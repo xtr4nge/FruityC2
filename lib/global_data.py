@@ -37,5 +37,6 @@ class global_data():
         self.key = "SECRET"
         self.utimestamp = ""
         self.load_command = ""
+        self.proxy = ""
 
 gdata = global_data()

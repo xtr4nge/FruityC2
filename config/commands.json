@@ -27,5 +27,13 @@
     "spn_request": "Request SPN",
     "kerberos_ticket_dump": "Dump kerberos tickets from this session (base64)",
     "kerberos_ticket_purge": "Purge kerberos tickets from this session",
-    "usemodule": ""
+    "usemodule": "Loads and exec functions from powershell scripts (job)",
+    "set_passive_task": "",
+    "get_passive_task": "",
+    "push_agent": "Push agent into proxy (param: proxy port)",
+    "get_result": "Get result from proxy<->agent",
+    "proxy_kill": "Kill (stop) proxy",
+    "proxy_reset": "Reset all agents linked with proxy",
+    "proxy_link": "Get all linked proxy<->agent (param: proxy port)",
+    "link_proxy": "Get all linked proxy<->agent (param: proxy port)"
 }

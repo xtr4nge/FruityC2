@@ -152,13 +152,13 @@ def powershell_encoder_deflate(data):
 # ENCRYPT DATA
 def encrypt(data):
     # NOTE: You need to implement your own encryption/decryption method. (FUNCTION: encrypt and decrypt)
-    
+
     return data
 
 # DECRYPT DATA
 def decrypt(data):
     # NOTE: You need to implement your own encryption/decryption method. (FUNCTION: encrypt and decrypt)
-    
+
     return data
 
 # ENCODE TO B64 URLSAFE
@@ -168,7 +168,7 @@ def b64encoder(data): # URLSAFE
     data = data.replace("/", "_") # BASE64 URLSAFE
     return data    
 
-# DEENCODE FROM B64 URLSAFE
+# DECODE FROM B64 URLSAFE
 def b64decoder(data): # URLSAFE
     data = data.replace("-", "+") # BASE64 URLSAFE
     data = data.replace("_", "/") # BASE64 URLSAFE

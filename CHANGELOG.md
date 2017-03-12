@@ -2,6 +2,13 @@ Changelog
 ==============
 
 
+[v0.5](https://github.com/xtr4nge/FruityC2/releases/tag/v0.5)
+----------------
+- Proxy mode has been added (C2<->agent<->proxy<->agent)
+- vbs payload has been added
+- powershell command encoder has been added
+
+
 [v0.4](https://github.com/xtr4nge/FruityC2/releases/tag/v0.4)
 ----------------
 - usemodule has been implemented (job)

