@@ -7,6 +7,7 @@ Changelog
 - FruityC2 Client SSL has been implemented
 - Default|Custom SSL certificate (FruityC2) has been implemented
 - Default|Custom SSL certificate (Listener) has been implemented
+- Proxy mode has been implemented
 
 
 [v0.5](https://github.com/xtr4nge/FruityC2/releases/tag/v0.5)
