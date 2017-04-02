@@ -57,7 +57,7 @@ log.setLevel(logging.ERROR)
 requests.packages.urllib3.disable_warnings() # DISABLE SSL CHECK WARNINGS
 
 # FRUITYC2 BANNER
-__version__ = "0.5"
+__version__ = "0.6"
 print_banner(__version__)
 
 # LOAD PARAMETERS
@@ -66,8 +66,16 @@ print_banner(__version__)
 config = ConfigObj("config/settings.conf")
 
 # GLOBAL VARS
+server_ssl = ""
+server_cert = ""
 if server_ip == "": server_ip = config["server"]["ip"]
 if server_port == "": server_port = config["server"]["port"]
+if server_ssl == "": server_ssl = config["server"]["ssl"]
+if server_cert == "": server_cert = config["server"]["cert"]
+if server_ssl.lower() == "true":
+    server_ssl = True
+else:
+    server_ssl =  False
 
 source_control_allow = config["source"]["control"]["allow"]
 
@@ -169,17 +177,22 @@ def gzipped(f):
 # ------ END EXPERIMENTAL -----
 
 # FLASK START/STOP
-def flask_init(x, port):
+def flask_init(x, port, v_ssl, v_cert):
     try:
-        if listener_details[port]["ssl"]:
+        if v_ssl: #listener_details[port]["ssl"]:
             # REF: http://werkzeug.pocoo.org/docs/0.11/serving/
-            context = ssl.SSLContext(ssl.PROTOCOL_TLSv1_2)
-            context.load_cert_chain('certs/nginx.crt', 'certs/nginx.key')
+            ##context = ssl.SSLContext(ssl.PROTOCOL_TLSv1_2)
+            ##context.load_cert_chain('certs/nginx.crt', 'certs/nginx.key')
+            if v_cert != "":
+                context = ("certs/"+v_cert, "certs/"+v_cert)
+            else:
+                 context = ('certs/fruityc2.pem', 'certs/fruityc2.pem')
             app.run(host='0.0.0.0', port=int(port), debug=False, ssl_context=context)
         else:
-            app.run(host='0.0.0.0', port=int(port))
-    except:
-        app.run(host='0.0.0.0', port=int(port))
+            app.run(host='0.0.0.0', debug=False, port=int(port))
+    except Exception as e:
+        #print traceback.print_exc()
+        app.run(host='0.0.0.0', debug=False, port=int(port))
     #app.run(host='0.0.0.0', port=int(port))
     
     #print "bye %s" % port # UPDATE STATUS HERE [global]
@@ -188,7 +201,9 @@ def flask_init(x, port):
 
 def flask_start(port):
     print "Starting Listener %s%s:%s%s" % (bcolors.BOLD, listener_details[port]["host"], port, bcolors.ENDC)
-    listener[port] = threading.Thread(name=str(port), target=flask_init, args=(1,port))
+    v_ssl = listener_details[port]["ssl"]
+    v_cert = listener_details[port]["cert"]
+    listener[port] = threading.Thread(name=str(port), target=flask_init, args=(1, port, v_ssl, v_cert))
     listener[port].setDaemon(True)
     listener[port].start()
     listener_details[port]["open"] = True
@@ -196,7 +211,8 @@ def flask_start(port):
 
 def flask_stop(port):
     print "Stopping Listener %s%s:%s%s" % (bcolors.BOLD, listener_details[port]["host"], port, bcolors.ENDC)
-    if listener_details[port]["ssl"]:
+    v_ssl = listener_details[port]["ssl"]
+    if v_ssl: # listener_details[port]["ssl"]:
         r = requests.get('https://127.0.0.1:%s/shutdown' % port, verify=False)
     else:
         r = requests.get('http://127.0.0.1:%s/shutdown' % port)
@@ -1141,6 +1157,12 @@ def listener_add():
     v_name = request.form.get('name')
     v_host = request.form.get('host')
     v_ssl = request.form.get('ssl')
+    v_cert = request.form.get('cert')
+    
+    if v_ssl.lower() == "true":
+        v_ssl = True
+    else:
+        v_ssl = False
     
     timestamp = str(int(time.time()))
     
@@ -1148,6 +1170,7 @@ def listener_add():
     listener_details[v_port] = {"name": v_name,
                         "host": v_host,
                         "ssl": v_ssl,
+                        "cert": v_cert,
                         "open": False
                           }
     
@@ -1196,10 +1219,17 @@ def listener_update():
     v_name = request.form.get('name')
     v_host = request.form.get('host')
     v_ssl = request.form.get('ssl')
+    v_cert = request.form.get('cert')
+    
+    if v_ssl.lower() == "true":
+        v_ssl = True
+    else:
+        v_ssl = False
     
     listener_details[v_id] = {"name": v_name,
                      "host": v_host,
                      "ssl": v_ssl,
+                     "cert": v_cert,
                      "open": False
                     }
     
@@ -1266,6 +1296,18 @@ def set_listener(port, action):
     resp.headers['Server'] = 'Nginx'
 
     #print listener
+    return resp
+
+# LIST PAYLOAD FILES
+@app.route('/certificate')
+def list_certificate_pem():
+    # VERIFY IF SOURCE IP IS ALLOWED
+    if validate_source_ip(request): return get_profile_headers_denied()
+    
+    data = glob.glob("certs/*.pem")
+    data = map(lambda x: str.replace(x, "certs/", ""), data)
+    
+    resp = Response(json.dumps(data))
     return resp
 
 # CHAT
@@ -1580,13 +1622,15 @@ if __name__ == "__main__":
     try:
         
         print "Starting Server   %s%s:%s%s" %  (bcolors.BOLD, server_ip, server_port, bcolors.ENDC)
-        c2 = threading.Thread(name=str(server_port), target=flask_init, args=(1,server_port))
+        c2 = threading.Thread(name=str(server_port), target=flask_init, args=(1, server_port, server_ssl, server_cert))
         c2.setDaemon(True)
         c2.start()
         
         for port in listener:
             print "Starting Listener %s%s:%s%s" % (bcolors.BOLD, listener_details[port]["host"], port, bcolors.ENDC)
-            listener[port] = threading.Thread(name=str(port), target=flask_init, args=(1,port))
+            v_ssl = listener_details[port]["ssl"]
+            v_cert = listener_details[port]["cert"]
+            listener[port] = threading.Thread(name=str(port), target=flask_init, args=(1, port, v_ssl, v_cert))
             listener[port].setDaemon(True)
             listener[port].start()
             listener_details[port]["open"] = True
