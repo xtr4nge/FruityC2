@@ -50,7 +50,7 @@ https://github.com/xtr4nge/FruityC2-Client/wiki
 <br>
 
 <img src="http://i.imgur.com/eSYUw8X.png" w-idth="760">
-<br><br>
+<br>
 
 ## Extra Scripts
 
