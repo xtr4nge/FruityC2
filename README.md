@@ -2,13 +2,14 @@
 
 This is the initial release for FruityC2 (alpha version). Can be installed on any linux system, but the installation scripts are made for Debian based systems. There are a lot of functionalities that will be include in future releases, and probably a lot of code will be changed, but this version is enough to show FruityC2.
 
+<br>
 FruityC2 is a post-exploitation (and open source) framework based on the deployment of agents on compromised machines. Agents are managed from a web interface under the control of an operator.
 
 It works as a command-and-control model and is language and system agnostic. New agents are being developed to expand the capabilities and options for FruityC2.
 
 A web client is used to interact with the FruityC2 API in a client/server mode. The client is a single web page divided into 5 sections: Interact, Listener, Payload, Delivery, Config. These options provide full control and access to the functions included in FruityC2 to create, deliver and interact with a functioning C2 capability.
 
-
+<br>
 During the development of the initial alpha version, I divided the efforts between the client and the server, but mainly on the client. 
 
 The next steps are to improve the Stager and Agent, add more functionalities and commands, and I will start developing new stagers and agents for other OS systems.
