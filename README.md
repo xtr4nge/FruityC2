@@ -19,24 +19,12 @@ Note: The current Stager and Agent can be only executed on Windows (powershell),
 
 ## Install
 
-### Method 1: Standard installer (Server)
-
 script: [install.sh](https://github.com/xtr4nge/FruityC2/blob/master/install.sh)
 <br>**Note**: you need to download the master.zip file or to clone the repository (FruityC2).
 
 - You need Debian (or based) installed (or a Live CD version) to use this script.
 - Download the zip file from https://github.com/xtr4nge/FruityC2/archive/master.zip
 - Unzip the file and run **install.sh** (This script will install all the dependencies)
-- Done.
-<br><br>
-
-### Method 2: Standalone installer (Server and Client)
-
-script: [install-standalone.sh](https://github.com/xtr4nge/FruityC2/blob/master/install-standalone.sh)
-
-- You need Debian (or based) installed (or a Live CD version) to use this script.
-- Download installer-standalone.sh from https://github.com/xtr4nge/FruityC2/
-- run **install-standalone.sh** (It will downlaod and install all the dependencies, FruityC2 and FruityC2-Client)
 - Done.
 <br><br>
 
