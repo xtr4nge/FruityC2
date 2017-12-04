@@ -30,6 +30,10 @@ import socket
 import ssl
 from pyasn1.codec.ber import encoder, decoder
 from multiprocessing import JoinableQueue, Manager
+import hashlib
+from netaddr import IPNetwork, IPAddress
+import random
+import string
 
 # LIBS
 from lib.global_data import *
@@ -45,7 +49,7 @@ def print_banner(__version__):
     print ""
 
 def usage():
-    print "\nFruityC2 " + gVersion + " by @xtr4nge"
+    print "\nFruityC2 by @xtr4nge"
     
     print "Usage: FruityC2 <options>\n"
     print "Options:"
@@ -59,6 +63,7 @@ def usage():
 
 def parseOptions(argv):
     profileConfig  = "profiles/amazon.json"
+    #profileConfig  = "profiles/cloudfront.json"
     server_ip = ""
     server_port = ""
     
@@ -250,6 +255,18 @@ def save_log_json(uuid):
     f.write(json.dumps(data) + "\n")
     f.close()
 
+def save_log_traceback(data):
+    now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    
+    output = "%s \n %s \n" % (now, data)
+    
+    if option_debug: print output #print traceback.print_exc()
+    
+    f = open("logs/traceback.log", 'a+')
+    f.write(output)
+    f.close()
+    
+
 # -----------------------
 # FUNCTIONS CHAT
 # -----------------------
@@ -399,3 +416,20 @@ def kirbi2john(data, filename):
             et = (str(decoder.decode(ticket.decode('hex'))[0][4][3][2]),0,filename)
 
     return "$krb5tgs$" + et[2] + ":"+et[0][:16].encode("hex")+"$"+et[0][16:].encode("hex")
+
+def getHash(data):
+    hash_object = hashlib.sha1(b'%s' % data)
+    hex_dig = hash_object.hexdigest()
+    return hex_dig
+
+def IPSourceValidator(v_source, v_range):
+    if "*" in v_range or v_source in v_range:
+        return True
+    for v_item in v_range:
+        if IPAddress(v_source) in IPNetwork(v_item):
+            return True
+
+    return False
+
+def random_hexdigits(num):
+    return ''.join(random.choice(string.hexdigits) for _ in range(num))

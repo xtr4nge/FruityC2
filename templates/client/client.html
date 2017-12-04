@@ -1,0 +1,972 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>FruityC2</title>
+	
+	<script src="static/js/jquery.min.js"></script>
+	<script src="static/js/jquery-ui.js"></script>
+	
+	<link rel="stylesheet" href="static/css/jquery-ui.css">
+	
+	<link rel="stylesheet" href="static/css/style.css">
+
+	<link rel="stylesheet" href="static/css/bootstrap.css" />
+	<link rel="stylesheet" href="static/css/bootstrap-menu.css" />
+	<link rel="stylesheet" href="static/css/bootstrap-switch.css" />
+	<link rel="stylesheet" href="static/css/font-awesome.css" />
+	
+	<script src="static/js/bootstrap.js"></script>
+	<script src="static/js/bootstrap-switch.js"></script>
+
+	<link rel="icon" type="image/x-icon" href="static/favicon.ico"/>
+</head>
+<body>
+
+<div id="custom-bootstrap-menu" class="navbar navbar-default navbar-fixed-top" role="navigation">
+    <div class="container-fluid">
+        <div class="navbar-header">
+            <a class="navbar-brand" href="http://www.fruitywifi.com" target="blank">FruityC2</a>
+        </div>
+		<div class="collapse navbar-collapse navbar-menubuilder">
+            <ul class="nav navbar-nav navbar-left">
+				<li>
+					<span style="margin-left: 20px">
+					</span>
+				</li>
+				<!-- VIEW -->
+				<li>
+					<span><i class='fa fa-navicon' style='margin-top: 18px; color: white' onclick="load_targets_list()" title="List View"></i></span>
+				</li>
+				<li>
+					<span><i class='fa fa-desktop' style='margin-top: 18px; margin-left: 10px; color: white' onclick="load_targets()" title="Nodes View"></i></span>
+				</li>
+				<!-- | -->
+				<li>
+					<font class="fa" style='margin-top: 18px; margin-right: 10px; margin-left: 10px; color: grey'> | </font>
+				</li>
+				<!-- DATA -->
+				<li>
+					<span><i class='fa fa-vcard-o' style='margin-top: 18px; color: white' data-toggle="modal" data-target="#mCredentials" onclick="load_credentials();" title="Credentials"></i></span>
+				</li>
+				<li>
+					<span><i class='fa fa-download' style='margin-top: 18px; margin-left: 10px; color: white' data-toggle="modal" data-target="#mDownloads" onclick="load_downloads()" title="Downloads"></i></span>
+				</li>
+				<li>
+					<span><i class='fa fa-keyboard-o' style='margin-top: 18px; margin-left: 10px; color: white' data-toggle="modal" data-target="#mNotImplemented" title="Keylogger"></i></span>
+				</li>
+				<li>
+					<span><i class='fa fa-picture-o' style='margin-top: 18px; margin-left: 10px; color: white' data-toggle="modal" data-target="#mScreenshots" onclick="load_screenshots()" title="Screenhots"></i></span>
+				</li>
+				<!-- | -->
+				<li>
+					<font class="fa" style='margin-top: 18px; margin-right: 10px; margin-left: 10px; color: grey'> | </font>
+				</li>
+				<!-- CODE GENERATOR -->
+				<li>
+					<span><i class='fa fa-cogs' style='margin-top: 18px; color: white' data-toggle="modal" data-target="#mGenerateCode" onclick="payload_listener_load();" title="Code Generator"></i></span>
+				</li>
+				<!-- | -->
+				<li>
+					<font class="fa" style='margin-top: 18px; margin-right: 10px; margin-left: 10px; color: grey'> | </font>
+				</li>
+				<!-- USER -->
+				<li>
+					<span><i class='fa fa-user' style='margin-top: 18px; color: white' data-toggle="modal" data-target="#mLogin" title="Connection"></i></span>
+				</li>
+				<!-- | -->
+				<li>
+					<font class="fa" style='margin-top: 18px; margin-right: 10px; margin-left: 10px; color: grey'> | </font>
+				</li>
+				<!-- LOGOUT -->
+				<li>
+					<span><i class='fa fa-sign-out' style='margin-top: 18px; margin-right: 18px; color: white' onclick="location.href = 'logout';" title="Logout"></i></span>
+					<!--<span><i class='fa fa-sign-out' style='margin-top: 18px; margin-right: 18px; color: white' onclick="logout();" data-toggle="modal" data-target="#mLogin" title="Logout"></i></span>-->
+				</li>
+				 <li>
+					<span style="padding-right: 100px"></span>
+					<span>
+						<i class='fa fa-laptop' style='margin-right: 5px; color: white'></i>
+						<span id="alert-target" class="label label-warning">0</span>
+					</span> |
+					<span data-toggle="modal" data-target="#mChat">
+						<i class='fa fa-comments' style='margin-right: 5px; color: white'></i>
+						<span id="alert-chat" class="label label-primary">0</span>
+					</span> |  
+					<span data-toggle="modal" data-target="#mAlert">
+						<i class='fa fa-bolt' style='margin-right: 5px; color: white'></i>
+						<span id="alert-alert" class="label label-danger">0</span>
+					</span> | <span style="color: white"> v{{ version }}</span>
+				 </li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<br><br><br>
+	<!--
+        | 
+        <i class='fa fa-navicon' s-tyle='font-size:12px;' onclick="load_targets_list()"></i> |
+        <i class='fa fa-desktop' s-tyle='font-size:12px;' onclick="load_targets()"></i> |
+        <i class='fa fa-refresh' s-tyle='font-size:12px;' onclick="load_targets()"></i> |
+	-->
+        <div id="container_target">
+            <!--
+                <div class="target"></div><div class="target"></div><div class="target"></div><div class="target"></div>
+                <div class="target"></div><div class="target"></div><div class="target"></div><div class="target"></div>
+                <div class="target"></div><div class="target"></div><div class="target"></div><div class="target"></div>
+            -->
+        </div>
+
+<div style="clear: left;"></div>
+
+<br>
+
+<!-- https://codepen.io/wizly/pen/BlKxo/ -->
+<ul class="nav nav-tabs">
+	<li class="active"><a  href="#tab-control" data-toggle="tab">Interact</a></li>
+    <li><a href="#tab-listener" data-toggle="tab">Listener</a></li>
+	<li><a href="#tab-payload" data-toggle="tab">Payload</a></li>
+    <li><a href="#tab-delivery" data-toggle="tab">Delivery</a></li>
+	<li><a href="#tab-config" data-toggle="tab">Config</a></li>
+</ul>
+
+<div class="tab-content ">
+	<!-- CONTROL -->
+	<div class="tab-pane active" id="tab-control">
+        
+        <!-- BLOCK CONTROL -->
+        <div class="bs-callout bs-callout-primary">
+			<input id="target" class="form-control input-sm" style='width: 200px' disabled="disabled" type="hidden">
+			<!--
+            Target
+            <div class="input-group">
+                <select id="target" class="form-control input-sm" style='width: 200px'>
+                </select>
+                <a href="?"><button type="button" class="btn btn-primary btn-sm">Refresh</button></a>
+            </div>
+            
+            <br><br>
+			-->
+            
+            Command 
+			<i class='fa fa-terminal' s-tyle='font-size:12px;'></i>
+			<font class="fa" style='margin-top: 18px; margin-right: 5px; margin-left: 5px; color: #BBB'> | </font>
+			<i class='fa fa-sitemap' s-tyle='font-size:12px;' data-toggle="modal" data-target="#mModules" onclick="load_modules()" title="Modules"></i>
+			<font class="fa" style='margin-top: 18px; margin-right: 5px; margin-left: 5px; color: #BBB'> | </font>
+			<i class='fa fa-question-circle' s-tyle='font-size:12px;' data-toggle="modal" data-target="#mCommand" title="Commands Info"></i>
+			<font class="fa" style='margin-top: 18px; margin-right: 5px; margin-left: 5px; color: #BBB'> | </font>
+			<i class='fa fa-play-circle' s-tyle='font-size:12px;' data-toggle="modal" data-target="#mDemo" title="Commands Demo"></i>
+			
+			<form action="#" onsubmit="set_control(); return false;">
+            <div class="input-group">
+					<input id="control" class="form-control input-sm" type="text">
+					<span class="input-group-btn">
+						<button type="button" class="btn btn-primary btn-sm" onclick="set_control();">SET</button>
+					</span>
+				
+            </div>
+			</form>
+            <textarea rows=14 id="logs" class="form-control input-sm" style="font-family: monospace, courier; font-size: 10px"></textarea>
+            <!--<div id="logs" class="form-control input-sm" style="overflow:auto; font-family: monospace, courier; font-size: 10px; height: 200px"></div>-->
+        </div>
+        <!-- ./BLOCK CONTROL -->
+        
+	</div>
+	<!-- ./CONTROL -->
+	
+    <!-- LISTENER -->
+	<div class="tab-pane" id="tab-listener">
+		<!-- BLOCK LISTENER -->
+        <div class="bs-callout bs-callout-primary">
+            <h4>
+                <i class='fa fa-plus' style='font-size:12px' data-toggle="modal" data-target="#mListenerAdd" onclick="listener_certificate_load('');"></i>
+                Listeners
+            </h4>
+            <div id="container_listener"></div>
+        </div>
+        <!-- ./BLOCK LISTENER -->
+        
+	</div>
+	<!-- ./LISTENER -->
+    
+	<!-- PAYLOAD -->
+	<div class="tab-pane" id="tab-payload">
+		
+        <!-- <div data-toggle="modal" data-target="#mGenerateCode" onclick="payload_listener_load();">&nbsp;&nbsp;&nbsp;<i class='fa fa-cogs' style='font-size:12px; color: #428bca'></i> Payload Generator</div>-->
+
+        <div class="bs-callout bs-callout-primary">
+            <h4>
+                <i class='fa fa-plus' style='font-size:12px' data-toggle="modal" data-target="#mPayloadAdd"></i>
+                Payloads (Code)
+            </h4> 
+            <div id="container_payload"></div>
+        </div>
+		
+		<div class="bs-callout bs-callout-primary">
+            <h4>
+                <i class='fa fa-plus' style='font-size:12px' data-toggle="modal" data-target="#mPayloadUpload"></i>
+                Payloads (File)
+            </h4> 
+            <div id="container_payload_file"></div>
+        </div>
+        
+	</div>
+	<!-- ./PAYLOAD -->
+	
+    <!-- DELIVERY -->
+	<div class="tab-pane" id="tab-delivery">
+		<!-- BLOCK DELIVERY -->
+        <div class="bs-callout bs-callout-primary">
+            <h4>
+                <i class='fa fa-plus' style='font-size:12px' data-toggle="modal" data-target="#mWebDAdd" onclick="web_delivery_payload_load()"></i>
+                Web Delivery
+            </h4>
+            <div id="container_web_delivery"></div>
+        </div>
+        <!-- ./BLOCK DELIVERY -->
+        
+	</div>
+	<!-- ./DELIVERY -->
+    
+	<!-- CONFIG -->
+	<div class="tab-pane" id="tab-config">
+		<!-- BLOCK CONFIG -->
+        <div class="bs-callout bs-callout-primary">
+
+			<a href="?"><button type="button" class="btn btn-primary btn-sm" onclick="refresh_settings(); return false;">Reload</button></a>
+			<a href="?"><button type="button" class="btn btn-primary btn-sm" onclick="return false; ">Save</button></a>
+			
+			<br>
+            <br>
+            
+            Control (Allowed)
+            <textarea rows=5 id="source_control_allow" class="form-control input-sm" style="font-family: monospace, courier; font-size: 10px" disabled="disabled"></textarea>
+            
+            <br>
+            
+            Targets (Allowed)
+            <textarea rows=5 id="source_agents_allow" class="form-control input-sm" style="font-family: monospace, courier; font-size: 10px" disabled="disabled"></textarea>
+
+			<br>
+			
+			Profile (Default)
+            <div class="input-group">
+                <select id="default-profile" class="form-control input-sm" style='width: 200px' disabled="disabled">
+                </select>
+                <a href="?"><button type="button" class="btn btn-primary btn-sm">Refresh</button></a>
+            </div>
+            
+            <br>
+            
+            Listener (Default)
+            <div class="input-group">
+                <select id="default-listener" class="form-control input-sm" style='width: 200px' disabled="disabled">
+                </select>
+                <a href="?"><button type="button" class="btn btn-primary btn-sm">Refresh</button></a>
+            </div>
+        
+        </div>
+        <!-- ./BLOCK CONFIG -->
+        
+	</div>
+	<!-- ./CONFIG -->
+</div>
+	
+<!-- MODAL SECTION -->
+
+	<!-- Modal Login -->
+    <div class="modal fade" id="mLogin" role="dialog">
+      <div class="modal-dialog">
+      
+        <!-- Modal content-->
+        <div class="modal-content">
+          <div class="modal-header">
+              <button type="button" class="close" data-dismiss="modal">&times;</button>
+              <h4 class="modal-title">Connect to Server</h4>
+          </div>
+          <div class="modal-body">
+            <div>
+				Host <input id="login_host" class="form-control input-sm" value="" d-isabled="disabled"></input>
+                Port <input id="login_port" class="form-control input-sm" value="" d-isabled="disabled"></input>
+				<div style="margin-top: 5px"><input id="login_ssl" type="checkbox" value="true"> SSL</div>
+				User <input id="login_user" class="form-control input-sm" value=""></input>
+				Token <input id="login_token" class="form-control input-sm" value="32F04C2998A8A3F9EA12FA79254349BD8F5CC327" disabled="disabled"></input>
+            </div>
+          </div>
+          <div class="modal-footer">
+			<div id="connection_error" class="alert alert-danger" role="alert" align="left">CONNECTION ERROR</div>
+            <button type="button" class="btn btn-default" onclick="set_login()">Submit</button>
+            <!--<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>-->
+          </div>
+        </div>
+        
+      </div>
+    </div>
+    <!-- ./Modal Username -->
+
+    <!-- Modal Demo -->
+    <div class="modal fade" id="mDemo" role="dialog">
+      <div class="modal-dialog">
+      
+        <!-- Modal content-->
+        <div class="modal-content">
+          <div class="modal-header">
+              <button type="button" class="close" data-dismiss="modal">&times;</button>
+              <h4 class="modal-title">DEMO: COMMANDS</h4>
+          </div>
+          <div class="modal-body">
+              <a href="#" onclick="set_control_param('checkin'); alert('Command sent to selected target');">checkin</a>
+              <br>
+              <a href="#" onclick="set_control_param('pwd'); alert('Command sent to selected target');">pwd</a>
+              <br>
+              <a href="#" onclick="set_control_param('hashdump'); alert('Command sent to selected target');">hashdump</a>
+              
+              <br>
+              <br>
+              
+              <a href="#" onclick="set_control_param('shell ipconfig'); alert('Command sent to selected target');">shell ipconfig</a>
+              <br>
+			  <a href="#" onclick="set_control_param('shell msg * FruityC2'); alert('Command sent to selected target');">shell msg * FruityC2</a>
+              <br>
+              <a href="#" onclick="set_control_param('shell net view'); alert('Command sent to selected target');">shell net view</a>
+              <br>
+              <a href="#" onclick="set_control_param('shell net view /domain'); alert('Command sent to selected target');">shell net view /domain</a>
+              <br>
+              <a href="#" onclick="set_control_param('shell whoami'); alert('Command sent to selected target');">shell whoami</a>
+              <br>
+              <a href="#" onclick="set_control_param('shell whoami /groups'); alert('Command sent to selected target');">shell whoami /groups</a>
+              <br>
+              <a href="#" onclick="set_control_param('shell whoami /all /fo list'); alert('Command sent to selected target');">shell whoami /all /fo list</a>
+              
+              <br><br>
+              
+              <a href="#" onclick="set_control_param('powershell-import modules/core/PowerUp.ps1'); alert('Command sent to selected target');">powershell-import modules/core/PowerUp.ps1</a>
+              <br>
+              <a href="#" onclick="set_control_param('powershell Invoke-AllChecks'); alert('Command sent to selected target');">powershell Invoke-AllChecks</a>
+              
+              <br><br>
+              
+              <a href="#" onclick="set_control_param('powershell-import modules/core/Invoke-Mimikatz.ps1'); alert('Command sent to selected target');">powershell-import modules/core/Invoke-Mimikatz.ps1</a>
+              <br>
+              <a href="#" onclick="set_control_param('powershell Invoke-Mimikatz'); alert('Command sent to selected target');">powershell Invoke-Mimikatz</a>
+			  
+			  <br><br>
+              
+              <a href="#" onclick="set_control_param('usemodule modules/core/PowerUp.ps1 Invoke-AllChecks'); alert('Command sent to selected target');">usemodule modules/core/PowerUp.ps1 Invoke-AllChecks</a>
+			  
+			  <br><br>
+              
+              <a href="#" onclick="set_control_param('usemodule modules/core/Invoke-Mimikatz.ps1 Invoke-Mimikatz'); alert('Command sent to selected target');">usemodule modules/core/Invoke-Mimikatz.ps1 Invoke-Mimikatz</a>
+			  
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+          </div>
+        </div>
+        
+      </div>
+    </div>
+    <!-- ./Modal Demo -->
+	
+	<!-- Modal Modules List -->
+    <div class="modal fade" id="mModules" role="dialog">
+      <div class="modal-dialog">
+      
+        <!-- Modal content-->
+        <div class="modal-content">
+          <div class="modal-header">
+              <button type="button" class="close" data-dismiss="modal">&times;</button>
+              <h4 class="modal-title">POWERSHELL MODULES</h4>
+          </div>
+          <div class="modal-body">
+			<div id="modules_list" style="overflow-y: scroll; height:400px;">
+				
+			</div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+          </div>
+        </div>
+        
+      </div>
+    </div>
+    <!-- ./Modal Modules List -->
+	
+	<!-- Modal Commands List -->
+    <div class="modal fade" id="mCommand" role="dialog">
+      <div class="modal-dialog">
+      
+        <!-- Modal content-->
+        <div class="modal-content">
+          <div class="modal-header">
+              <button type="button" class="close" data-dismiss="modal">&times;</button>
+              <h4 class="modal-title">COMMANDS LIST</h4>
+          </div>
+          <div id="command_list" class="modal-body" style="height:360px; overflow:scroll;">
+			<!-- COMMANDS & DESCRIPTION -->
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+          </div>
+        </div>
+        
+      </div>
+    </div>
+    <!-- ./Modal Commands List -->
+    
+    <!-- Modal Payload [ADD] -->
+    <div class="modal fade" id="mPayloadAdd" role="dialog">
+      <div class="modal-dialog">
+      
+        <!-- Modal content-->
+        <div class="modal-content">
+          <div class="modal-header">
+              <button type="button" class="close" data-dismiss="modal">&times;</button>
+              <h4 class="modal-title">Add Payload</h4>
+          </div>
+          <div class="modal-body">
+            <div>
+                Name <input id="add-payload-name" class="form-control input-sm">
+                Payload <textarea id="add-payload-payload" class="form-control input-sm" rows="10"></textarea>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" onclick="payload_add(); load_payload(); modal_close('mPayloadAdd');">Submit</button>
+            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+          </div>
+        </div>
+        
+      </div>
+    </div>
+    <!-- ./Modal Payload [ADD] -->
+    
+    <!-- Modal Payload -->
+    <div class="modal fade" id="mPayload" role="dialog">
+      <div class="modal-dialog">
+      
+        <!-- Modal content-->
+        <div class="modal-content">
+          <div class="modal-header">
+              <button type="button" class="close" data-dismiss="modal">&times;</button>
+              <h4 class="modal-title">Payload</h4>
+          </div>
+          <div class="modal-body">
+            <div>
+                ID <input id="payload-id" class="form-control input-sm" disabled>
+                Name <input id="payload-name" class="form-control input-sm">
+                Payload <textarea id="payload-payload" class="form-control input-sm" rows="10"></textarea>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" onclick="payload_update(); load_payload(); modal_close('mPayload');">Submit</button>
+            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+          </div>
+        </div>
+        
+      </div>
+    </div>
+    <!-- ./Modal Payload -->
+	
+	<!-- Modal Payload [UPLOAD] -->
+    <div class="modal fade" id="mPayloadUpload" role="dialog">
+      <div class="modal-dialog">
+      
+        <!-- Modal content-->
+		<form name="dataUpload" id="dataUpload" action="payload/upload" method="POST" enctype="multipart/form-data">
+			<div class="modal-content">
+			  <div class="modal-header">
+				  <button type="button" class="close" data-dismiss="modal">&times;</button>
+				  <h4 class="modal-title">Add Payload</h4>
+			  </div>
+			  <div class="modal-body">
+				<div>
+					File <input id="upload-payload-file" type="file" name="payload_file" class="f-orm-control input-sm" />
+					Name <input id="upload-payload-name" name="name" class="form-control input-sm">
+				</div>
+			  </div>
+			  <div class="modal-footer">
+				<input type="submit" class="btn btn-default" value="Upload"/>
+				<!-- <button type="button" class="btn btn-default" onclick="payload_upload(); load_payload_file(); modal_close('mPayloadUpload');">Upload</button>-->
+				<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+			  </div>	
+				  
+			</div>
+		</form>
+        
+      </div>
+    </div>
+    <!-- ./Modal Payload [UPLOAD] -->
+    
+    <!-- Modal Web Delivery [ADD] -->
+    <div class="modal fade" id="mWebDAdd" role="dialog">
+      <div class="modal-dialog">
+      
+        <!-- Modal content-->
+        <div class="modal-content">
+          <div class="modal-header">
+              <button type="button" class="close" data-dismiss="modal">&times;</button>
+              <h4 class="modal-title">Add Web Delivery</h4>
+          </div>
+          <div class="modal-body">
+            <div>
+                Name <input id="add-webd-name" class="form-control input-sm">
+                Path <input id="add-webd-path" class="form-control input-sm">
+                Type <select id="add-webd-type" class="form-control input-sm">
+                    <option>download</option>
+                    <option>string</option>
+                </select>
+                File Name <input id="add-webd-filename" class="form-control input-sm">
+				Payload Type <select id="add-webd-payload-type" class="form-control input-sm" onchange="load_payload_options(this)">
+                    <option>code</option>
+                    <option>file</option>
+                </select>
+                Payload <select id="add-webd-payload-id" class="form-control input-sm">
+                    <option>1</option>
+                </select>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" onclick="web_delivery_add(); load_web_delivery(); modal_close('mWebDAdd');">Submit</button>
+            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+          </div>
+        </div>
+        
+      </div>
+    </div>
+    <!-- ./Modal Web Delivery -->
+    
+    <!-- Modal Web Delivery -->
+    <div class="modal fade" id="mWebDelivery" role="dialog">
+      <div class="modal-dialog">
+      
+        <!-- Modal content-->
+        <div class="modal-content">
+          <div class="modal-header">
+              <button type="button" class="close" data-dismiss="modal">&times;</button>
+              <h4 class="modal-title">Web Delivery</h4>
+          </div>
+          <div class="modal-body">
+            <div>
+                ID <input id="web-delivery-id" class="form-control input-sm" disabled>
+                Name <input id="web-delivery-name" class="form-control input-sm">
+                Path <input id="web-delivery-path" class="form-control input-sm">
+                Type <select id="web-delivery-type" class="form-control input-sm">
+                    <option>download</option>
+                    <option>string</option>
+                </select>
+                File Name <input id="web-delivery-filename" class="form-control input-sm">
+				Payload Type <select id="web-delivery-payload-type" class="form-control input-sm" onchange="load_payload_options(this)">
+                    <option>code</option>
+                    <option>file</option>
+                </select>
+                Payload <select id="web-delivery-payload-id" class="form-control input-sm">
+                    <option>1</option>
+                </select>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" onclick="web_delivery_update(); load_web_delivery(); modal_close('mWebDelivery');">Submit</button>
+            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+          </div>
+        </div>
+        
+      </div>
+    </div>
+    <!-- ./Modal Web Delivery -->
+    
+    <!-- Modal Generate Code -->
+    <div class="modal fade" id="mGenerateCode" role="dialog">
+      <div class="modal-dialog">
+      
+        <!-- Modal content-->
+        <div class="modal-content">
+          <div class="modal-header">
+              <button type="button" class="close" data-dismiss="modal">&times;</button>
+              <h4 class="modal-title">Generate Code</h4>
+          </div>
+          <div class="modal-body">
+			<div>
+				<ul class="nav nav-tabs">
+					<li class="active"><a  href="#tab-gcode-stager" data-toggle="tab" o-nclick="load_credentials();">Stager</a></li>
+					<li><a href="#tab-gcode-proxy" data-toggle="tab" o-nclick="load_credentials_spn();">Proxy</a></li>
+					<li><a href="#tab-gcode-encoder" data-toggle="tab" o-nclick="load_credentials_ticket();">Encoder</a></li>
+				</ul>
+				<div class="tab-content ">
+					<div class="tab-pane active" id="tab-gcode-stager">
+						<br>
+						<!--<div id="container_credentials" style="overflow: scroll; height:400px;"></div>-->
+						
+						<div>
+							Listerner <select id="generate-code-listener" class="form-control input-sm">
+								<option>-</option>
+							</select>
+							Type <select id="generate-code-type" class="form-control input-sm">
+								<option>-</option>
+								<option>powershell</option>
+								<option>powershell-command</option>
+								<option>powershell-webdelivery</option>
+								<option>hta</option>
+								<option>vba</option>
+								<option>vbs</option>
+								<option>sct</option>
+							</select>
+							Payload <textarea id="generate-code-payload" class="form-control input-sm" rows="10"></textarea>
+							<div  style="padding-top: 4px; height: 28px;">
+								<button type="button" class="btn btn-primary pull-right" onclick="generate_code();">Generate</button>
+							</div>
+						</div>
+					</div>
+					<div class="tab-pane" id="tab-gcode-proxy">
+						<div>
+							Port <input id="generate-code-proxy-port" class="form-control input-sm">
+							Type <select id="generate-code-proxy-type" class="form-control input-sm">
+								<option>-</option>
+								<option>powershell</option>
+								<option>powershell-command</option>
+								<option>powershell-webdelivery</option>
+								<option>hta</option>
+								<option>vba</option>
+								<option>vbs</option>
+								<option>sct</option>
+							</select>
+							Payload <textarea id="generate-code-proxy-payload" class="form-control input-sm" rows="10"></textarea>
+							<div  style="padding-top: 4px; height: 28px;">
+								<button type="button" class="btn btn-primary pull-right" onclick="generate_code_proxy();">Generate</button>
+							</div>
+						</div>
+					</div>
+					<div class="tab-pane" id="tab-gcode-encoder">
+						Code <textarea id="generate-code-encoder-code" class="form-control input-sm" rows="6"></textarea>
+						Encoded <textarea id="generate-code-encoder-encoded" class="form-control input-sm" rows="6"></textarea>
+						<div  style="padding-top: 4px; height: 28px;">
+							<button type="button" class="btn btn-primary pull-right" onclick="generate_encoded();">Generate</button>
+						</div>
+					</div>
+				</div>
+			</div>
+          </div>
+          <div class="modal-footer">
+            <!--<button type="button" class="btn btn-default" onclick="generate_code();">Submit</button>
+            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>-->
+          </div>
+        </div>
+        
+      </div>
+    </div>
+    <!-- ./Modal Generate Code -->
+    
+    <!-- Modal Chat -->
+    <div class="modal fade" id="mChat" role="dialog">
+      <div class="modal-dialog">
+      
+        <!-- Modal content-->
+        <div class="modal-content">
+          <div class="modal-header">
+              <button type="button" class="close" data-dismiss="modal">&times;</button>
+              <h4 class="modal-title">Team Chat</h4>
+          </div>
+          <div class="modal-body">
+            <div>
+                User
+                <div class="input-group">
+                    <input id="chat-user" class="form-control input-sm" disabled>
+                    <span class="input-group-btn">
+                        <button type="button" class="btn btn-primary btn-sm" style="width: 52px" data-toggle="modal" data-target="#mUsername">Set</button>
+                    </span>
+                </div>
+                Message
+                <form action="#" onsubmit="post_chat(); return false;" autocomplete="off">
+                <div class="input-group">
+                    <input id="chat-msg" class="form-control input-sm"></input>
+                    <span class="input-group-btn">
+                        <button type="button" class="btn btn-primary btn-sm" style="width: 52px" onclick="post_chat()">Send</button>
+                    </span>
+                </div>
+                <div id="container_chat" style="height:300px; overflow:scroll;"></div>
+                </form>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" onclick="post_chat()">Submit</button>
+            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+          </div>
+        </div>
+        
+      </div>
+    </div>
+    <!-- ./Modal Chat -->
+    
+    <!-- Modal Username -->
+    <div class="modal fade" id="mUsername" role="dialog">
+      <div class="modal-dialog">
+      
+        <!-- Modal content-->
+        <div class="modal-content">
+          <div class="modal-header">
+              <button type="button" class="close" data-dismiss="modal">&times;</button>
+              <h4 class="modal-title">Username</h4>
+          </div>
+          <div class="modal-body">
+            <div>
+                Username <input id="username" class="form-control input-sm"></input>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" onclick="set_username()">Submit</button>
+            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+          </div>
+        </div>
+        
+      </div>
+    </div>
+    <!-- ./Modal Username -->
+    
+    <!-- Modal Alert -->
+    <div class="modal fade" id="mAlert" role="dialog">
+      <div class="modal-dialog">
+      
+        <!-- Modal content-->
+        <div class="modal-content">
+          <div class="modal-header">
+              <button type="button" class="close" data-dismiss="modal">&times;</button>
+              <h4 class="modal-title">Alert</h4>
+          </div>
+          <div class="modal-body">
+            <div>
+                <div id="container_alert" style="height:300px; overflow:scroll;"></div>
+                </form>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+          </div>
+        </div>
+        
+      </div>
+    </div>
+    <!-- ./Modal Alert -->
+    
+    <!-- Modal Listener [ADD] -->
+    <div class="modal fade" id="mListenerAdd" role="dialog">
+      <div class="modal-dialog">
+      
+        <!-- Modal content-->
+        <div class="modal-content">
+          <div class="modal-header">
+              <button type="button" class="close" data-dismiss="modal">&times;</button>
+              <h4 class="modal-title">Listener</h4>
+          </div>
+          <div class="modal-body">
+            <div>
+                Name <input id="add-listener-name" class="form-control input-sm">
+                Host <input id="add-listener-host" class="form-control input-sm">
+                Port <input id="add-listener-port" class="form-control input-sm">
+				<div style="margin-top: 5px"><input id="add-listener-ssl" type="checkbox" value="true"> SSL</div>
+                <!--<input id="add-listener-ssl" class="form-control input-sm" value="false" d-isabled="disabled" title="to be implemented">-->
+				Certificate
+				<select id="add-listener-cert" class="form-control input-sm">
+				</select>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" onclick="listener_add(); load_listener(); modal_close('mListenerAdd');">Submit</button>
+            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+          </div>
+        </div>
+        
+      </div>
+    </div>
+    <!-- ./Modal Listener [ADD] -->
+    
+    <!-- Modal Listener -->
+    <div class="modal fade" id="mListener" role="dialog">
+      <div class="modal-dialog">
+      
+        <!-- Modal content-->
+        <div class="modal-content">
+          <div class="modal-header">
+              <button type="button" class="close" data-dismiss="modal">&times;</button>
+              <h4 class="modal-title">Listener</h4>
+          </div>
+          <div class="modal-body">
+            <div>
+                Name <input id="listener-name" class="form-control input-sm">
+                Host <input id="listener-host" class="form-control input-sm">
+                Port (id) <input id="listener-id" class="form-control input-sm" disabled>
+				<div style="margin-top: 5px"><input id="listener-ssl" type="checkbox" value="true"> SSL</div>
+				<!--<input id="listener-ssl" class="form-control input-sm"  value="false" d-isabled="disabled" title="to be implemented">-->
+				Certificate
+				<select id="listener-cert" class="form-control input-sm">
+				</select>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" onclick="listener_update(); load_listener(); modal_close('mListener');">Submit</button>
+            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+          </div>
+        </div>
+        
+      </div>
+    </div>
+    <!-- ./Modal Listener -->
+
+	<!-- Modal Not Implemented -->
+    <div class="modal fade" id="mNotImplemented" role="dialog">
+      <div class="modal-dialog">
+      
+        <!-- Modal content-->
+        <div class="modal-content">
+          <div class="modal-header">
+              <button type="button" class="close" data-dismiss="modal">&times;</button>
+              <h4 class="modal-title">Message</h4>
+          </div>
+          <div class="modal-body">
+            <div>
+				<i class='fa fa-warning' style='margin-top: 18px; margin-left: 10px; c-olor: red; font-size: 18px; margin-right: 10px'></i>
+				This option will be implemented soon.
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+          </div>
+        </div>
+        
+      </div>
+    </div>
+    <!-- ./Modal Not Implemented -->
+
+	<!-- Modal DATA:Downloads -->
+    <div class="modal fade" id="mDownloads" role="dialog">
+      <div class="modal-dialog">
+      
+        <!-- Modal content-->
+        <div class="modal-content">
+          <div class="modal-header">
+              <button type="button" class="close" data-dismiss="modal">&times;</button>
+              <h4 class="modal-title">Downloads</h4>
+          </div>
+          <div class="modal-body">
+            <div>
+				<div id="container_downloads" style="overflow: scroll; height:400px;"></div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+          </div>
+        </div>
+        
+      </div>
+    </div>
+    <!-- ./Modal DATA:Downloads -->
+	
+	<!-- Modal DATA:Screeshots -->
+    <div class="modal fade" id="mScreenshots" role="dialog">
+      <div class="modal-dialog">
+      
+        <!-- Modal content-->
+        <div class="modal-content">
+          <div class="modal-header">
+              <button type="button" class="close" data-dismiss="modal">&times;</button>
+              <h4 class="modal-title">Screeshots</h4>
+          </div>
+          <div class="modal-body">
+            <div>
+				<div id="container_screenshots" style="overflow: scroll; height:400px;"></div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+          </div>
+        </div>
+        
+      </div>
+    </div>
+    <!-- ./Modal DATA:Screeshots -->
+
+	<!-- Modal DATA:Credentials -->
+    <div class="modal fade" id="mCredentials" role="dialog">
+      <div class="modal-dialog" style="width:780px">
+      
+        <!-- Modal content-->
+        <div class="modal-content">
+          <div class="modal-header">
+              <button type="button" class="close" data-dismiss="modal">&times;</button>
+              <h4 class="modal-title">Credentials</h4>
+          </div>
+          <div class="modal-body">
+            <div>
+				<!-- https://codepen.io/wizly/pen/BlKxo/ -->
+				<ul class="nav nav-tabs">
+					<li class="active"><a  href="#tab-creds-pass" data-toggle="tab" onclick="load_credentials();">Password</a></li>
+					<li><a href="#tab-creds-spn" data-toggle="tab" onclick="load_credentials_spn();">SPN</a></li>
+					<li><a href="#tab-creds-ticket" data-toggle="tab" onclick="load_credentials_ticket();">TGT/TGS</a></li>
+				</ul>
+				<div class="tab-content ">
+					<div class="tab-pane active" id="tab-creds-pass">
+						<br>
+						<div id="container_credentials" style="overflow: scroll; height:400px;"></div>
+					</div>
+					<div class="tab-pane" id="tab-creds-spn">
+						<br>
+						<div id="container_credentials_spn" style="overflow: scroll; height:400px;"></div>
+					</div>
+					<div class="tab-pane" id="tab-creds-ticket">
+						<br>
+						<div id="container_credentials_ticket" style="overflow: scroll; height:400px;"></div>
+					</div>
+				</div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+          </div>
+        </div>
+        
+      </div>
+    </div>
+    <!-- ./Modal DATA:Credentials -->
+	
+	<!-- Modal DATA:Credentials/John -->
+    <div class="modal fade" id="mCredentialsJohn" role="dialog">
+      <div class="modal-dialog" style="w-idth:700px">
+      
+        <!-- Modal content-->
+        <div class="modal-content">
+          <div class="modal-header">
+              <button type="button" class="close" data-dismiss="modal">&times;</button>
+              <h4 class="modal-title">John The Ripper (krb5tgs)</h4>
+          </div>
+          <div class="modal-body">
+            <div>
+				<textarea id="credentials_john" class="form-control input-sm" style="font-family: monospace, courier; font-size: 10px" rows=24></textarea>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+          </div>
+        </div>
+        
+      </div>
+    </div>
+    <!-- ./Modal DATA:Credentials/John -->
+
+<!-- ./MODAL SECTION -->
+
+<!-- <script src="functions.js"></script> -->
+
+<script src="static/js/utils.js"></script>
+<script src="static/js/functions-target.js"></script>
+<script src="static/js/functions-listener.js"></script>
+<script src="static/js/functions-payload.js"></script>
+<script src="static/js/functions-delivery.js"></script>
+<script src="static/js/functions-chat.js"></script>
+<script src="static/js/functions-alert.js"></script>
+<script src="static/js/functions-profile.js"></script>
+<script src="static/js/functions-data.js"></script>
+<script src="static/js//functions-settings.js"></script>
+<script src="static/js/core.js"></script>
+
+</body>
+</html>

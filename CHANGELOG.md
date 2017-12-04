@@ -1,6 +1,16 @@
 Changelog
 ==============
 
+[v0.7](https://github.com/xtr4nge/FruityC2/releases/tag/v0.7)
+----------------
+- GUI has been integrated with core
+- Login page has been implemented
+- New access control has been implemented (API & Agents)
+- Domain Fronting has been implemented
+- New malleable C2 profile options have been implemented
+- Wiki has been migrated to FruityC2 repository
+
+
 [v0.6](https://github.com/xtr4nge/FruityC2/releases/tag/v0.6)
 ----------------
 - HTTP Listener issue has been fixed

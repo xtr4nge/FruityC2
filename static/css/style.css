@@ -1,0 +1,120 @@
+body {
+	font-family: monospace, courier;
+	font-size: 11px;
+}
+
+.target {
+	float: left;
+	width: 130px;
+	height: 84px;
+	border: 1px solid black;
+	padding: 4px;
+	margin: 4px;
+	font-size: 11px;
+	font-family: monospace;
+	
+}
+.log_output {
+	font-size: 11px;
+	font-family: monospace;
+	
+}
+.mLevel3 {
+	background-color: #BF4A4A;
+}
+
+.mLevel4 {
+	background-color: red;
+}
+
+.mLevel3Font {
+	color: #BF4A4A;
+}
+
+.mLevel4Font {
+	color: red;
+}
+
+.boff {
+	b-ackground-color: #EFEFEF;
+	color: #777;
+}
+
+.view_list {
+	font-size: 14px;
+}
+
+/* http://cpratt.co/twitter-bootstrap-callout-css-styles/ */
+.bs-callout {
+	padding: 20px;
+	margin: 20px 0;
+	border: 1px solid #eee;
+	border-left-width: 5px;
+	border-radius: 3px;
+}
+.bs-callout h4 {
+	margin-top: 0;
+	margin-bottom: 5px;
+}
+.bs-callout p:last-child {
+	margin-bottom: 0;
+}
+.bs-callout code {
+	border-radius: 3px;
+}
+.bs-callout+.bs-callout {
+	margin-top: -5px;
+}
+.bs-callout-default {
+	border-left-color: #777;
+}
+.bs-callout-default h4 {
+	color: #777;
+}
+.bs-callout-primary {
+	border-left-color: #428bca;
+}
+.bs-callout-primary h4 {
+	color: #428bca;
+}
+.bs-callout-success {
+	border-left-color: #5cb85c;
+}
+.bs-callout-success h4 {
+	color: #5cb85c;
+}
+.bs-callout-danger {
+	border-left-color: #d9534f;
+}
+.bs-callout-danger h4 {
+	color: #d9534f;
+}
+.bs-callout-warning {
+	border-left-color: #f0ad4e;
+}
+.bs-callout-warning h4 {
+	color: #f0ad4e;
+}
+.bs-callout-info {
+	border-left-color: #5bc0de;
+}
+.bs-callout-info h4 {
+	color: #5bc0de;
+}
+
+.command-info {
+	display: inline-block;
+	width: 200px;
+}
+.danger {
+	color: #d9534f;
+}
+.warning {
+	color: #f0ad4e;
+}
+.info {
+	color: #5bc0de;
+}
+.success {
+	color: #5cb85c;
+}

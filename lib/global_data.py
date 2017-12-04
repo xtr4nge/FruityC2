@@ -16,11 +16,17 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+from configobj import ConfigObj
+config = ConfigObj("config/settings.conf")
+
 # GLOBAL
+#gVersion = "0.7"
+gVersion = config["__version__"]
 option_base64 = False
 option_encryption = False
 option_compression = True
-option_debug = False
+if config["debug"].lower() == "true": option_debug = True
+else: option_debug = False
 
 class global_data():
     def __init__(self):

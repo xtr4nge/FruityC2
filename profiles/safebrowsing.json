@@ -19,6 +19,7 @@
             },
         "server": {
             "header": [
+                "Server sffe",
 				"Content-Type application/vnd.google.safebrowsing-chunk",
                 "X-Content-Type-Options nosniff",
                 "Content-Encoding gzip",
